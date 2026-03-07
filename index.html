@@ -19,16 +19,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DieLog">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png">
-<link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
 
 <!-- iOS splash screens (optional but removes white flash on launch) -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <!-- Standard -->
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
 <meta name="description" content="Press Room Die Tracker — log shut height, guide roller, SPM and feed length. Works offline.">
 <title>DieLog — Press Room Tracker</title>
 
@@ -512,26 +512,6 @@ select option { background: var(--surface); }
   cursor: pointer; white-space: nowrap; min-height: 40px;
 }
 
-/* ── Stats bar ──────────────────────────────────────────── */
-.stats-row {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem; margin-bottom: 1.5rem;
-}
-.stat-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 0.75rem; text-align: center;
-}
-.stat-num {
-  font-family: var(--font-display);
-  font-size: 1.8rem; font-weight: 900;
-  color: var(--accent); line-height: 1;
-}
-.stat-lbl {
-  font-family: var(--font-mono);
-  font-size: 0.55rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--muted); margin-top: 0.2rem;
-}
 
 /* ── Press label on card ────────────────────────────────── */
 .die-press-label {
@@ -611,6 +591,14 @@ select option { background: var(--surface); }
         </div>
       </div>
       <div class="field">
+        <label for="f_steel">Steel #</label>
+        <input type="text" id="f_steel" placeholder="e.g. ST-4420" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="f_binsPerCoil">Bins per Coil</label>
+        <input type="number" id="f_binsPerCoil" placeholder="0" step="1" inputmode="numeric" />
+      </div>
+      <div class="field">
         <label for="f_date">Date</label>
         <input type="date" id="f_date" />
       </div>
@@ -620,26 +608,6 @@ select option { background: var(--surface); }
       </div>
     </div>
     <button class="btn-add" onclick="addDie()">＋ Log Die</button>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-row" id="statsRow" style="display:none">
-    <div class="stat-box">
-      <div class="stat-num" id="stat-total">0</div>
-      <div class="stat-lbl">Total Dies</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num" id="stat-avgSH">—</div>
-      <div class="stat-lbl">Avg Shut Ht</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num" id="stat-avgSPM">—</div>
-      <div class="stat-lbl">Avg SPM</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num" id="stat-avgFL">—</div>
-      <div class="stat-lbl">Avg Feed Len</div>
-    </div>
   </div>
 
   <!-- Toolbar -->
@@ -694,6 +662,14 @@ select option { background: var(--surface); }
         <input type="number" id="e_feedLength" step="0.001" inputmode="decimal" />
       </div>
       <div class="field">
+        <label for="e_steel">Steel #</label>
+        <input type="text" id="e_steel" />
+      </div>
+      <div class="field">
+        <label for="e_binsPerCoil">Bins per Coil</label>
+        <input type="number" id="e_binsPerCoil" step="1" inputmode="numeric" />
+      </div>
+      <div class="field">
         <label for="e_date">Date</label>
         <input type="date" id="e_date" />
       </div>
@@ -745,13 +721,15 @@ function addDie() {
     guideRoller: document.getElementById('f_guideRoller').value || '',
     spm:         document.getElementById('f_spm').value || '',
     feedLength:  document.getElementById('f_feedLength').value || '',
+    steel:       document.getElementById('f_steel').value.trim(),
+    binsPerCoil: document.getElementById('f_binsPerCoil').value || '',
     date:        document.getElementById('f_date').value || today(),
     notes:       document.getElementById('f_notes').value.trim(),
     createdAt:   Date.now()
   });
 
   save();
-  ['f_id','f_press','f_shutHeight','f_guideRoller','f_spm','f_feedLength','f_notes']
+  ['f_id','f_press','f_shutHeight','f_guideRoller','f_spm','f_feedLength','f_steel','f_binsPerCoil','f_notes']
     .forEach(i => document.getElementById(i).value = '');
   document.getElementById('f_date').value = today();
   renderList();
@@ -777,6 +755,8 @@ function openEdit(idx) {
   document.getElementById('e_guideRoller').value = d.guideRoller;
   document.getElementById('e_spm').value         = d.spm;
   document.getElementById('e_feedLength').value  = d.feedLength;
+  document.getElementById('e_steel').value       = d.steel || '';
+  document.getElementById('e_binsPerCoil').value = d.binsPerCoil || '';
   document.getElementById('e_date').value        = d.date;
   document.getElementById('e_notes').value       = d.notes || '';
   document.getElementById('editModal').classList.add('open');
@@ -791,6 +771,8 @@ function saveEdit() {
   d.guideRoller = document.getElementById('e_guideRoller').value;
   d.spm         = document.getElementById('e_spm').value;
   d.feedLength  = document.getElementById('e_feedLength').value;
+  d.steel       = document.getElementById('e_steel').value.trim();
+  d.binsPerCoil = document.getElementById('e_binsPerCoil').value;
   d.date        = document.getElementById('e_date').value;
   d.notes       = document.getElementById('e_notes').value.trim();
   save(); closeModal(); renderList(); updateStats();
@@ -859,6 +841,8 @@ function renderList() {
           ${d.guideRoller ? `<div class="meta-chip"><span class="meta-key">Guide Roller</span><span class="meta-val">${d.guideRoller}&Prime;</span></div>` : ''}
           ${d.spm         ? `<div class="meta-chip"><span class="meta-key">SPM</span><span class="meta-val">${d.spm}</span></div>` : ''}
           ${d.feedLength  ? `<div class="meta-chip"><span class="meta-key">Feed Length</span><span class="meta-val">${d.feedLength}&Prime;</span></div>` : ''}
+          ${d.steel       ? `<div class="meta-chip"><span class="meta-key">Steel #</span><span class="meta-val">${esc(d.steel)}</span></div>` : ''}
+          ${d.binsPerCoil ? `<div class="meta-chip"><span class="meta-key">Bins/Coil</span><span class="meta-val">${d.binsPerCoil}</span></div>` : ''}
         </div>
         ${d.notes ? `<div class="die-notes">${esc(d.notes)}</div>` : ''}
         <div class="die-date">${d.date || ''}</div>
@@ -879,29 +863,16 @@ function esc(s) {
 
 // ── Stats ─────────────────────────────────────────────────────────────────
 function updateStats() {
-  const row = document.getElementById('statsRow');
-  if (!dies.length) { row.style.display = 'none'; return; }
-  row.style.display = 'grid';
-  const avg = key => {
-    const vals = dies.map(d => parseFloat(d[key])).filter(v => !isNaN(v));
-    return vals.length ? (vals.reduce((a,b) => a+b,0) / vals.length).toFixed(3) : '—';
-  };
-  const avgSPM = () => {
-    const vals = dies.map(d => parseFloat(d.spm)).filter(v => !isNaN(v));
-    return vals.length ? Math.round(vals.reduce((a,b) => a+b,0) / vals.length) : '—';
-  };
-  document.getElementById('stat-total').textContent  = dies.length;
-  document.getElementById('stat-avgSH').textContent  = avg('shutHeight');
-  document.getElementById('stat-avgSPM').textContent = avgSPM();
-  document.getElementById('stat-avgFL').textContent  = avg('feedLength');
+  // Stats row removed; just update header count
+  document.getElementById('totalCount').textContent = dies.length;
 }
 
 // ── Export ───────────────────────────────────────────────────────────────
 function exportCSV() {
   if (!dies.length) { showToast('Nothing to export', true); return; }
-  const headers = ['Die ID','Press Number','Shut Height (in)','Guide Roller (in)','SPM','Feed Length (in)','Date','Notes'];
+  const headers = ['Die ID','Press Number','Shut Height (in)','Guide Roller (in)','SPM','Feed Length (in)','Steel #','Bins per Coil','Date','Notes'];
   const rows = dies.map(d =>
-    [d.id,d.press,d.shutHeight,d.guideRoller,d.spm,d.feedLength,d.date,d.notes]
+    [d.id,d.press,d.shutHeight,d.guideRoller,d.spm,d.feedLength,d.steel,d.binsPerCoil,d.date,d.notes]
       .map(v => `"${(v||'').toString().replace(/"/g,'""')}"`)
   );
   dl('dielog_export.csv','text/csv',[headers.join(','),...rows.map(r=>r.join(','))].join('\n'));
