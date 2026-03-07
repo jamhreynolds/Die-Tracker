@@ -8,8 +8,8 @@
 // Paste the ID of your master Google Sheet here.
 // The Sheet ID is the long string in its URL:
 //   https://docs.google.com/spreadsheets/d/  >>>SHEET_ID<<<  /edit
-const SHEET_ID   = 'YOUR_GOOGLE_SHEET_ID';
-const SHEET_NAME = 'DieLog Master';   // Tab name — will be created if missing
+const SHEET_ID   = 'https://docs.google.com/spreadsheets/d/18os6RxytobnUvvcAp_JkL0qHYpNkMAD4XvfTi0dZNT0/edit?usp=drivesdk';
+const SHEET_NAME = 'DieLog_Master_Template';   // Tab name — will be created if missing
 
 // Column order in your Sheet (do not reorder without updating both sides)
 const COLUMNS = [
