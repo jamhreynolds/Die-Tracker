@@ -4,21 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-<!-- PWA essentials -->
-<link rel="manifest" href="manifest.json">
+<!-- ═══ PWA Core ═══════════════════════════════════════════════════════ -->
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0a0a0f">
-<meta name="mobile-web-app-capable" content="yes">
 
-<!-- iOS PWA -->
+<!-- ═══ Android / Chrome install ══════════════════════════════════════ -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="DieLog">
+
+<!-- ═══ iOS "Add to Home Screen" ══════════════════════════════════════
+     Safari does NOT use the manifest for icons — these tags are required.
+     apple-touch-icon must be PNG, no alpha recommended, 180×180 for modern iPhones.
+══════════════════════════════════════════════════════════════════════ -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DieLog">
-<link rel="apple-touch-icon" href="icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
 
-<!-- Standard meta -->
-<meta name="description" content="Press Room Die Tracker — log shut height, guide roller, SPM and feed length offline.">
-<meta name="application-name" content="DieLog">
+<!-- iOS splash screens (optional but removes white flash on launch) -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- Standard -->
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+<meta name="description" content="Press Room Die Tracker — log shut height, guide roller, SPM and feed length. Works offline.">
 <title>DieLog — Press Room Tracker</title>
 
 <!-- Fonts -->

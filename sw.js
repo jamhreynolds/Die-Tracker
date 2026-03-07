@@ -1,90 +1,70 @@
-/* DieLog Service Worker — cache-first with network fallback */
-const CACHE_NAME   = 'dielog-v2';
-const FONT_CACHE   = 'dielog-fonts-v1';
+/* DieLog Service Worker v2 */
+const CACHE = 'dielog-v2';
+const FONT_CACHE = 'dielog-fonts-v1';
 
-const CORE_ASSETS = [
-  './index.html',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
+const CORE = [
+  '/index.html',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png',
 ];
 
-const FONT_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
-
-// ── Install: pre-cache core assets ──────────────────────────────────────
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(CORE_ASSETS))
+// Install — cache core assets immediately
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => c.addAll(CORE))
       .then(() => self.skipWaiting())
   );
 });
 
-// ── Activate: delete old caches ──────────────────────────────────────────
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(k => k !== CACHE_NAME && k !== FONT_CACHE)
-          .map(k => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
+// Activate — purge old caches
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE && k !== FONT_CACHE).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
-// ── Fetch: strategy per request type ────────────────────────────────────
-self.addEventListener('fetch', event => {
-  const { request } = event;
-  const url = new URL(request.url);
+// Fetch — cache-first for same-origin, stale-while-revalidate for fonts
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
 
-  // Google Fonts — stale-while-revalidate
-  if (FONT_ORIGINS.some(o => request.url.startsWith(o))) {
-    event.respondWith(staleWhileRevalidate(request, FONT_CACHE));
+  if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
+    e.respondWith(staleWhileRevalidate(e.request, FONT_CACHE));
     return;
   }
 
-  // Same-origin assets — cache-first
   if (url.origin === location.origin) {
-    event.respondWith(cacheFirst(request));
+    e.respondWith(cacheFirst(e.request));
     return;
   }
-
-  // Everything else — network only
-  event.respondWith(fetch(request));
 });
 
-// ── Cache strategies ─────────────────────────────────────────────────────
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
+async function cacheFirst(req) {
+  const cached = await caches.match(req);
   if (cached) return cached;
   try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
+    const res = await fetch(req);
+    if (res.ok) (await caches.open(CACHE)).put(req, res.clone());
+    return res;
   } catch {
-    // Offline fallback: return index.html for navigation requests
-    if (request.mode === 'navigate') {
-      return caches.match('./index.html');
-    }
+    if (req.mode === 'navigate') return caches.match('/index.html');
     return new Response('Offline', { status: 503 });
   }
 }
 
-async function staleWhileRevalidate(request, cacheName) {
+async function staleWhileRevalidate(req, cacheName) {
   const cache  = await caches.open(cacheName);
-  const cached = await cache.match(request);
-  const fetchPromise = fetch(request).then(response => {
-    if (response.ok) cache.put(request, response.clone());
-    return response;
-  }).catch(() => null);
-  return cached || fetchPromise;
+  const cached = await cache.match(req);
+  const fresh  = fetch(req).then(r => { if (r.ok) cache.put(req, r.clone()); return r; }).catch(() => null);
+  return cached || fresh;
 }
 
-// ── Background sync: notify clients of SW updates ───────────────────────
-self.addEventListener('message', event => {
-  if (event.data === 'SKIP_WAITING') self.skipWaiting();
+self.addEventListener('message', e => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
