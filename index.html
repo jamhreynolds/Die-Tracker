@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- PWA essentials -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DieLog">
+<link rel="apple-touch-icon" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+
+<!-- Standard meta -->
+<meta name="description" content="Press Room Die Tracker — log shut height, guide roller, SPM and feed length offline.">
+<meta name="application-name" content="DieLog">
+<title>DieLog — Press Room Tracker</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ── Variables ─────────────────────────────────────────── */
+:root {
+  --bg:           #0a0a0f;
+  --surface:      #13131a;
+  --surface2:     #1c1c28;
+  --border:       #2a2a3a;
+  --accent:       #f0a500;
+  --accent2:      #e05c00;
+  --text:         #e8e8f0;
+  --muted:        #6b6b80;
+  --danger:       #e03c3c;
+  --success:      #2ec27e;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+  --safe-top:     env(safe-area-inset-top, 0px);
+  --safe-bot:     env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  min-height: 100%;
+  overflow-x: hidden;
+  /* iOS momentum scroll */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Offline banner ─────────────────────────────────────── */
+#offline-bar {
+  display: none;
+  background: var(--accent2);
+  color: #fff;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 1rem;
+  padding-top: calc(0.35rem + var(--safe-top));
+}
+body.offline #offline-bar { display: block; }
+
+/* ── Update banner ──────────────────────────────────────── */
+#update-bar {
+  display: none;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--accent);
+  padding: 0.5rem 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+#update-bar.visible { display: flex; }
+#update-bar span {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text);
+  letter-spacing: 0.05em;
+}
+#update-bar button {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 2px solid var(--accent);
+  padding: 0 1.5rem;
+  padding-top: var(--safe-top);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: calc(60px + var(--safe-top));
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffee00;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(255,238,0,0.6), 0 2px 0 rgba(0,0,0,0.4);
+  user-select: none;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: right;
+}
+.header-count strong {
+  color: var(--accent);
+  font-size: 1rem;
+  display: block;
+}
+
+/* ── Main layout ────────────────────────────────────────── */
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  padding-bottom: calc(5rem + var(--safe-bot));
+}
+
+/* ── Section label ──────────────────────────────────────── */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 0.75rem;
+  padding-left: 2px;
+  text-shadow: 0 0 12px rgba(255,255,255,0.35);
+}
+
+/* ── Form card ──────────────────────────────────────────── */
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+@media (min-width: 600px) {
+  .form-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.field.full { grid-column: 1 / -1; }
+
+label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+input, select, textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  padding: 0.55rem 0.7rem;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  background: #0f0f18;
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
+textarea { resize: vertical; min-height: 60px; }
+select option { background: var(--surface); }
+
+.unit-wrap { position: relative; }
+.unit-wrap input { padding-right: 2.5rem; }
+.unit-label {
+  position: absolute; right: 0.6rem; top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--muted); pointer-events: none;
+}
+
+.btn-add {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 0.75rem;
+  transition: background 0.15s, transform 0.1s;
+  border-radius: 0;
+  /* Minimum tap target */
+  min-height: 48px;
+}
+.btn-add:hover  { background: #ffb820; }
+.btn-add:active { transform: scale(0.99); }
+
+/* ── Toolbar ────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.search-wrap { position: relative; flex: 1; }
+.search-wrap input { padding-left: 2rem; }
+.search-icon {
+  position: absolute; left: 0.6rem; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted); font-size: 0.85rem; pointer-events: none;
+}
+
+.sort-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+  min-height: 40px;
+}
+.sort-btn.active, .sort-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Die cards ──────────────────────────────────────────── */
+.die-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.die-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent2);
+  padding: 1rem 1.1rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: start;
+  transition: border-color 0.15s;
+  animation: slideIn 0.2s ease-out both;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.die-card:hover { border-color: var(--accent); }
+
+.die-id {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #ffee00;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 0 14px rgba(255,238,0,0.45);
+}
+
+.die-meta {
+  display: flex; flex-wrap: wrap;
+  gap: 0.4rem 1.2rem; margin-top: 0.4rem;
+}
+.meta-chip { display: flex; flex-direction: column; gap: 1px; }
+.meta-key {
+  font-family: var(--font-mono);
+  font-size: 0.55rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.meta-val { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text); font-weight: 500; }
+.meta-val.highlight { color: var(--accent); }
+
+.die-notes {
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem; color: var(--muted);
+  font-style: italic; line-height: 1.5;
+}
+.die-date {
+  font-family: var(--font-mono);
+  font-size: 0.6rem; color: var(--muted);
+  margin-top: 0.5rem; letter-spacing: 0.05em;
+}
+
+.card-actions { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.btn-icon {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 0;
+}
+.btn-icon:hover      { border-color: var(--accent); color: var(--accent); }
+.btn-icon.del:hover  { border-color: var(--danger); color: var(--danger); }
+
+/* ── Empty state ────────────────────────────────────────── */
+.empty {
+  text-align: center; padding: 3rem 1rem; color: var(--muted);
+}
+.empty-icon { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.4; }
+.empty h3 {
+  font-size: 1.3rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  margin-bottom: 0.25rem; color: var(--text); opacity: 0.5;
+}
+.empty p { font-family: var(--font-mono); font-size: 0.75rem; }
+
+/* ── Modal ──────────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85); z-index: 200;
+  align-items: flex-end; justify-content: center;
+  padding: 0;
+}
+@media (min-width: 600px) {
+  .modal-overlay { align-items: center; padding: 1rem; }
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-bottom: none;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.5rem;
+  padding-bottom: calc(1.5rem + var(--safe-bot));
+  animation: sheetUp 0.25s ease-out both;
+  border-radius: 0;
+}
+@media (min-width: 600px) {
+  .modal { border-bottom: 1px solid var(--accent); animation: popIn 0.2s ease-out both; }
+}
+
+@keyframes sheetUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-title {
+  font-size: 1.8rem; font-weight: 900;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  color: #ffe066;
+  text-shadow: 0 0 14px rgba(255,220,60,0.4);
+  margin-bottom: 1.25rem;
+}
+.modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+.btn-save {
+  background: var(--accent); color: #000; border: none;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 0.95rem; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.7rem 1.25rem;
+  cursor: pointer; flex: 1; min-height: 48px;
+}
+.btn-save:hover { background: #ffb820; }
+
+.btn-cancel {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-family: var(--font-display);
+  font-weight: 600; font-size: 0.95rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.7rem 1.25rem; cursor: pointer; min-height: 48px;
+}
+.btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+
+/* ── Export ─────────────────────────────────────────────── */
+.export-bar {
+  display: flex; gap: 0.5rem;
+  margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+.btn-export {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem; letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 40px;
+}
+.btn-export:hover { border-color: var(--success); color: var(--success); }
+
+/* ── Toast ──────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: calc(1.5rem + var(--safe-bot));
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--success);
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 0.75rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.6rem 1.2rem;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 300;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── PWA install banner ─────────────────────────────────── */
+.install-banner {
+  background: var(--surface2);
+  border: 1px solid var(--accent);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  display: none;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+}
+.install-banner.visible { display: flex; }
+.install-text { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text); letter-spacing: 0.05em; }
+.btn-install {
+  background: var(--accent); color: #000; border: none;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 0.85rem; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 0.4rem 0.9rem;
+  cursor: pointer; white-space: nowrap; min-height: 40px;
+}
+
+/* ── Stats bar ──────────────────────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem; margin-bottom: 1.5rem;
+}
+.stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.75rem; text-align: center;
+}
+.stat-num {
+  font-family: var(--font-display);
+  font-size: 1.8rem; font-weight: 900;
+  color: var(--accent); line-height: 1;
+}
+.stat-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.55rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); margin-top: 0.2rem;
+}
+
+/* ── Press label on card ────────────────────────────────── */
+.die-press-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem; color: var(--muted);
+  margin-top: 2px; letter-spacing: 0.08em;
+}
+</style>
+</head>
+<body>
+
+<!-- Offline indicator -->
+<div id="offline-bar">⚡ You are offline — all data is saved locally</div>
+
+<!-- SW update banner -->
+<div id="update-bar">
+  <span>🔄 A new version of DieLog is available</span>
+  <button id="updateBtn">Update Now</button>
+</div>
+
+<header>
+  <div class="logo">Die<span>Log</span></div>
+  <div class="header-right">
+    <div class="header-count">
+      <strong id="totalCount">0</strong>
+      Dies Logged
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Install banner (shown by JS when installable) -->
+  <div class="install-banner" id="installBanner">
+    <span class="install-text">📲 Install DieLog for offline access &amp; home screen</span>
+    <button class="btn-install" id="installBtn">Install App</button>
+  </div>
+
+  <!-- Log New Die -->
+  <div class="section-label" id="log">// Log New Die</div>
+  <div class="form-card">
+    <div class="form-grid" id="addForm">
+      <div class="field">
+        <label for="f_id">Die ID</label>
+        <input type="text" id="f_id" placeholder="e.g. D-0042" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="f_press">Press Number</label>
+        <input type="text" id="f_press" placeholder="e.g. P-12" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="f_shutHeight">Shut Height</label>
+        <div class="unit-wrap">
+          <input type="number" id="f_shutHeight" placeholder="0.000" step="0.001" inputmode="decimal" />
+          <span class="unit-label">in</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_guideRoller">Meas. at Guide Roller</label>
+        <div class="unit-wrap">
+          <input type="number" id="f_guideRoller" placeholder="0.000" step="0.001" inputmode="decimal" />
+          <span class="unit-label">in</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_spm">SPM</label>
+        <div class="unit-wrap">
+          <input type="number" id="f_spm" placeholder="0" step="1" inputmode="numeric" />
+          <span class="unit-label">spm</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_feedLength">Feed Length</label>
+        <div class="unit-wrap">
+          <input type="number" id="f_feedLength" placeholder="0.000" step="0.001" inputmode="decimal" />
+          <span class="unit-label">in</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_date">Date</label>
+        <input type="date" id="f_date" />
+      </div>
+      <div class="field full">
+        <label for="f_notes">Notes (optional)</label>
+        <textarea id="f_notes" placeholder="Any observations..."></textarea>
+      </div>
+    </div>
+    <button class="btn-add" onclick="addDie()">＋ Log Die</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow" style="display:none">
+    <div class="stat-box">
+      <div class="stat-num" id="stat-total">0</div>
+      <div class="stat-lbl">Total Dies</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-avgSH">—</div>
+      <div class="stat-lbl">Avg Shut Ht</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-avgSPM">—</div>
+      <div class="stat-lbl">Avg SPM</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-avgFL">—</div>
+      <div class="stat-lbl">Avg Feed Len</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="search" id="searchInput" placeholder="Search by die ID..." oninput="renderList()" autocomplete="off" />
+    </div>
+    <button class="sort-btn active" id="sortDate" onclick="setSort('date')">Date ↓</button>
+    <button class="sort-btn" id="sortId" onclick="setSort('id')">ID ↑</button>
+  </div>
+
+  <!-- Export -->
+  <div class="export-bar">
+    <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+    <button class="btn-export" onclick="exportJSON()">⬇ Export JSON</button>
+  </div>
+
+  <!-- Die list -->
+  <div class="section-label">// Logged Dies</div>
+  <div class="die-list" id="dieList"></div>
+
+</main>
+
+<!-- Edit modal -->
+<div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-label="Edit Die">
+  <div class="modal">
+    <div class="modal-title">Edit Die</div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="e_id">Die ID</label>
+        <input type="text" id="e_id" />
+      </div>
+      <div class="field">
+        <label for="e_press">Press Number</label>
+        <input type="text" id="e_press" />
+      </div>
+      <div class="field">
+        <label for="e_shutHeight">Shut Height (in)</label>
+        <input type="number" id="e_shutHeight" step="0.001" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label for="e_guideRoller">Guide Roller (in)</label>
+        <input type="number" id="e_guideRoller" step="0.001" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label for="e_spm">SPM</label>
+        <input type="number" id="e_spm" step="1" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="e_feedLength">Feed Length (in)</label>
+        <input type="number" id="e_feedLength" step="0.001" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label for="e_date">Date</label>
+        <input type="date" id="e_date" />
+      </div>
+      <div class="field full">
+        <label for="e_notes">Notes</label>
+        <textarea id="e_notes"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveEdit()">Save Changes</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ═══ App Logic ═══════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+const STORAGE_KEY = 'dielog_v1';
+let dies        = [];
+let sortMode    = 'date';
+let editIndex   = null;
+let deferredInstall = null;
+let swReg       = null;
+
+// ── Storage ──────────────────────────────────────────────────────────────
+function load() {
+  try { dies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { dies = []; }
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(dies)); }
+  catch { showToast('Storage full — could not save!', true); }
+}
+
+// ── Add ──────────────────────────────────────────────────────────────────
+function addDie() {
+  const id = document.getElementById('f_id').value.trim();
+  if (!id) { showToast('Die ID is required', true); return; }
+
+  dies.unshift({
+    id,
+    press:       document.getElementById('f_press').value.trim(),
+    shutHeight:  document.getElementById('f_shutHeight').value || '',
+    guideRoller: document.getElementById('f_guideRoller').value || '',
+    spm:         document.getElementById('f_spm').value || '',
+    feedLength:  document.getElementById('f_feedLength').value || '',
+    date:        document.getElementById('f_date').value || today(),
+    notes:       document.getElementById('f_notes').value.trim(),
+    createdAt:   Date.now()
+  });
+
+  save();
+  ['f_id','f_press','f_shutHeight','f_guideRoller','f_spm','f_feedLength','f_notes']
+    .forEach(i => document.getElementById(i).value = '');
+  document.getElementById('f_date').value = today();
+  renderList();
+  updateStats();
+  showToast('Die logged ✓');
+}
+
+// ── Delete ───────────────────────────────────────────────────────────────
+function deleteDie(idx) {
+  if (!confirm(`Delete die "${dies[idx].id}"?`)) return;
+  dies.splice(idx, 1);
+  save(); renderList(); updateStats();
+  showToast('Deleted');
+}
+
+// ── Edit ─────────────────────────────────────────────────────────────────
+function openEdit(idx) {
+  editIndex = idx;
+  const d = dies[idx];
+  document.getElementById('e_id').value          = d.id;
+  document.getElementById('e_press').value       = d.press || '';
+  document.getElementById('e_shutHeight').value  = d.shutHeight;
+  document.getElementById('e_guideRoller').value = d.guideRoller;
+  document.getElementById('e_spm').value         = d.spm;
+  document.getElementById('e_feedLength').value  = d.feedLength;
+  document.getElementById('e_date').value        = d.date;
+  document.getElementById('e_notes').value       = d.notes || '';
+  document.getElementById('editModal').classList.add('open');
+  document.getElementById('e_id').focus();
+}
+
+function saveEdit() {
+  const d = dies[editIndex];
+  d.id          = document.getElementById('e_id').value.trim() || d.id;
+  d.press       = document.getElementById('e_press').value.trim();
+  d.shutHeight  = document.getElementById('e_shutHeight').value;
+  d.guideRoller = document.getElementById('e_guideRoller').value;
+  d.spm         = document.getElementById('e_spm').value;
+  d.feedLength  = document.getElementById('e_feedLength').value;
+  d.date        = document.getElementById('e_date').value;
+  d.notes       = document.getElementById('e_notes').value.trim();
+  save(); closeModal(); renderList(); updateStats();
+  showToast('Updated ✓');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('open');
+  editIndex = null;
+}
+
+document.getElementById('editModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('editModal')) closeModal();
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── Sort ─────────────────────────────────────────────────────────────────
+function setSort(mode) {
+  sortMode = mode;
+  document.getElementById('sortDate').classList.toggle('active', mode === 'date');
+  document.getElementById('sortId').classList.toggle('active', mode === 'id');
+  renderList();
+}
+
+function getSorted() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = dies.filter(d =>
+    d.id.toLowerCase().includes(q) ||
+    (d.press || '').toLowerCase().includes(q)
+  );
+  return filtered.sort((a, b) =>
+    sortMode === 'date'
+      ? (b.date || '').localeCompare(a.date || '')
+      : a.id.localeCompare(b.id)
+  );
+}
+
+// ── Render ───────────────────────────────────────────────────────────────
+function renderList() {
+  const list   = document.getElementById('dieList');
+  const sorted = getSorted();
+  document.getElementById('totalCount').textContent = dies.length;
+
+  if (!sorted.length) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-icon">⚙</div>
+      <h3>${dies.length ? 'No results' : 'No dies logged yet'}</h3>
+      <p>${dies.length ? 'Try a different search' : 'Fill the form above to get started'}</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = sorted.map(d => {
+    const realIdx = dies.indexOf(d);
+    return `
+    <div class="die-card">
+      <div>
+        <div class="die-id">${esc(d.id)}</div>
+        ${d.press ? `<div class="die-press-label">PRESS <span style="color:var(--text);font-weight:500">${esc(d.press)}</span></div>` : ''}
+        <div class="die-meta">
+          ${d.shutHeight  ? `<div class="meta-chip"><span class="meta-key">Shut Height</span><span class="meta-val highlight">${d.shutHeight}&Prime;</span></div>` : ''}
+          ${d.guideRoller ? `<div class="meta-chip"><span class="meta-key">Guide Roller</span><span class="meta-val">${d.guideRoller}&Prime;</span></div>` : ''}
+          ${d.spm         ? `<div class="meta-chip"><span class="meta-key">SPM</span><span class="meta-val">${d.spm}</span></div>` : ''}
+          ${d.feedLength  ? `<div class="meta-chip"><span class="meta-key">Feed Length</span><span class="meta-val">${d.feedLength}&Prime;</span></div>` : ''}
+        </div>
+        ${d.notes ? `<div class="die-notes">${esc(d.notes)}</div>` : ''}
+        <div class="die-date">${d.date || ''}</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openEdit(${realIdx})" title="Edit">✎</button>
+        <button class="btn-icon del" onclick="deleteDie(${realIdx})" title="Delete">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+function updateStats() {
+  const row = document.getElementById('statsRow');
+  if (!dies.length) { row.style.display = 'none'; return; }
+  row.style.display = 'grid';
+  const avg = key => {
+    const vals = dies.map(d => parseFloat(d[key])).filter(v => !isNaN(v));
+    return vals.length ? (vals.reduce((a,b) => a+b,0) / vals.length).toFixed(3) : '—';
+  };
+  const avgSPM = () => {
+    const vals = dies.map(d => parseFloat(d.spm)).filter(v => !isNaN(v));
+    return vals.length ? Math.round(vals.reduce((a,b) => a+b,0) / vals.length) : '—';
+  };
+  document.getElementById('stat-total').textContent  = dies.length;
+  document.getElementById('stat-avgSH').textContent  = avg('shutHeight');
+  document.getElementById('stat-avgSPM').textContent = avgSPM();
+  document.getElementById('stat-avgFL').textContent  = avg('feedLength');
+}
+
+// ── Export ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!dies.length) { showToast('Nothing to export', true); return; }
+  const headers = ['Die ID','Press Number','Shut Height (in)','Guide Roller (in)','SPM','Feed Length (in)','Date','Notes'];
+  const rows = dies.map(d =>
+    [d.id,d.press,d.shutHeight,d.guideRoller,d.spm,d.feedLength,d.date,d.notes]
+      .map(v => `"${(v||'').toString().replace(/"/g,'""')}"`)
+  );
+  dl('dielog_export.csv','text/csv',[headers.join(','),...rows.map(r=>r.join(','))].join('\n'));
+  showToast('CSV exported ✓');
+}
+
+function exportJSON() {
+  if (!dies.length) { showToast('Nothing to export', true); return; }
+  dl('dielog_export.json','application/json', JSON.stringify(dies, null, 2));
+  showToast('JSON exported ✓');
+}
+
+function dl(name, type, content) {
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([content],{type})),
+    download: name
+  });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, isErr = false) {
+  const t = document.getElementById('toast');
+  t.textContent  = msg;
+  t.style.background = isErr ? 'var(--danger)' : 'var(--success)';
+  t.style.color      = isErr ? '#fff' : '#000';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// ── Offline / Online ──────────────────────────────────────────────────────
+function syncOnlineState() {
+  document.body.classList.toggle('offline', !navigator.onLine);
+}
+window.addEventListener('online',  () => { syncOnlineState(); showToast('Back online ✓'); });
+window.addEventListener('offline', () => { syncOnlineState(); showToast('You are offline', true); });
+
+// ── PWA install prompt ─────────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById('installBanner').classList.add('visible');
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  const { outcome } = await deferredInstall.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('installBanner').classList.remove('visible');
+    showToast('DieLog installed ✓');
+  }
+  deferredInstall = null;
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('visible');
+  deferredInstall = null;
+});
+
+// ── Service Worker registration ───────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      swReg = await navigator.serviceWorker.register('./sw.js');
+
+      // Detect available updates
+      swReg.addEventListener('updatefound', () => {
+        const newWorker = swReg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            document.getElementById('update-bar').classList.add('visible');
+          }
+        });
+      });
+
+      // Reload after SW takes control
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) { refreshing = true; location.reload(); }
+      });
+
+    } catch(err) {
+      console.warn('SW registration failed:', err);
+    }
+  });
+}
+
+document.getElementById('updateBtn').addEventListener('click', () => {
+  if (swReg && swReg.waiting) {
+    swReg.waiting.postMessage('SKIP_WAITING');
+  }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.getElementById('f_date').value = today();
+load();
+renderList();
+updateStats();
+syncOnlineState();
+
+// Enter to submit
+document.querySelectorAll('#addForm input').forEach(input =>
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') addDie(); })
+);
+</script>
+
+</body>
+</html>
