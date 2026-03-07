@@ -37,6 +37,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <style>
 /* ── Variables ─────────────────────────────────────────── */
 :root {
@@ -519,9 +522,155 @@ select option { background: var(--surface); }
   font-size: 0.7rem; color: var(--muted);
   margin-top: 2px; letter-spacing: 0.08em;
 }
+
+/* ── Auth / Login Screen ────────────────────────────────── */
+#authScreen {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2rem;
+  gap: 0;
+}
+#authScreen.hidden { display: none; }
+
+.auth-logo {
+  font-size: 4rem; font-weight: 900;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: #ffee00;
+  text-shadow: 0 0 30px rgba(255,238,0,0.5), 0 3px 0 rgba(0,0,0,0.5);
+  line-height: 1; margin-bottom: 0.3rem;
+  user-select: none;
+}
+.auth-sub {
+  font-family: var(--font-mono);
+  font-size: 0.7rem; color: var(--muted);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  padding: 2rem 1.75rem;
+  width: 100%; max-width: 380px;
+}
+
+.auth-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--muted); text-align: center;
+  margin-bottom: 1rem;
+}
+
+.auth-divider {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.auth-divider span {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+.auth-email-row {
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.auth-email-row input {
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font-mono);
+  font-size: 0.85rem; padding: 0.6rem 0.75rem;
+  outline: none; transition: border-color 0.15s; border-radius: 0;
+}
+.auth-email-row input:focus { border-color: var(--accent); }
+.auth-email-row input::placeholder { color: var(--muted); }
+
+.btn-email-login {
+  background: var(--accent); color: #000; border: none;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 0.9rem; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.65rem 1rem;
+  cursor: pointer; min-height: 44px; transition: background 0.15s;
+  border-radius: 0;
+}
+.btn-email-login:hover { background: #ffb820; }
+
+.google-btn-wrap {
+  display: flex; justify-content: center;
+}
+
+/* ── User info in header ─────────────────────────────────── */
+.user-badge {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--muted); letter-spacing: 0.06em;
+}
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--accent); object-fit: cover;
+}
+.user-initial {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 0.85rem;
+  font-weight: 700; color: var(--accent);
+}
+.btn-signout {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-family: var(--font-mono);
+  font-size: 0.6rem; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.25rem 0.5rem;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-signout:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ── Sheets sync button ──────────────────────────────────── */
+.btn-sync {
+  border-color: #34a853 !important;
+  color: #34a853 !important;
+}
+.btn-sync:hover { background: rgba(52,168,83,0.1) !important; }
+.btn-sync:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sync-status {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  min-height: 1rem;
+}
+.sync-status.ok  { color: var(--success); }
+.sync-status.err { color: var(--danger); }
 </style>
 </head>
 <body>
+
+<!-- ── Auth / Login Screen ─────────────────────────────────────────────── -->
+<div id="authScreen">
+  <div class="auth-logo">Die<span>Log</span></div>
+  <div class="auth-sub">Press Room Tracker</div>
+  <div class="auth-card">
+    <div class="auth-label">Sign in to continue</div>
+
+    <!-- Google Sign-In button (rendered by GIS) -->
+    <div class="google-btn-wrap" id="googleBtnContainer"></div>
+
+    <div class="auth-divider"><span>or sign in with email</span></div>
+
+    <div class="auth-email-row">
+      <input type="email" id="authEmail" placeholder="your@email.com" autocomplete="email" />
+      <button class="btn-email-login" onclick="emailLogin()">Continue with Email</button>
+    </div>
+  </div>
+</div>
 
 <!-- Offline indicator -->
 <div id="offline-bar">⚡ You are offline — all data is saved locally</div>
@@ -535,6 +684,11 @@ select option { background: var(--surface); }
 <header>
   <div class="logo">Die<span>Log</span></div>
   <div class="header-right">
+    <div class="user-badge" id="userBadge" style="display:none">
+      <div class="user-initial" id="userInitial"></div>
+      <span id="userEmailDisplay"></span>
+      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    </div>
     <div class="header-count">
       <strong id="totalCount">0</strong>
       Dies Logged
@@ -595,6 +749,10 @@ select option { background: var(--surface); }
         <input type="text" id="f_steel" placeholder="e.g. ST-4420" autocomplete="off" />
       </div>
       <div class="field">
+        <label for="f_steelLocation">Steel Location</label>
+        <input type="text" id="f_steelLocation" placeholder="e.g. Rack B-3" autocomplete="off" />
+      </div>
+      <div class="field">
         <label for="f_binsPerCoil">Bins per Coil</label>
         <input type="number" id="f_binsPerCoil" placeholder="0" step="1" inputmode="numeric" />
       </div>
@@ -620,11 +778,13 @@ select option { background: var(--surface); }
     <button class="sort-btn" id="sortId" onclick="setSort('id')">ID ↑</button>
   </div>
 
-  <!-- Export -->
+  <!-- Export / Sync -->
   <div class="export-bar">
-    <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
-    <button class="btn-export" onclick="exportJSON()">⬇ Export JSON</button>
+    <button class="btn-export" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn-export" onclick="exportJSON()">⬇ JSON</button>
+    <button class="btn-export btn-sync" onclick="syncAllToSheets()" id="syncBtn">⟳ Sync All to Sheets</button>
   </div>
+  <div class="sync-status" id="syncStatus"></div>
 
   <!-- Die list -->
   <div class="section-label">// Logged Dies</div>
@@ -666,6 +826,10 @@ select option { background: var(--surface); }
         <input type="text" id="e_steel" />
       </div>
       <div class="field">
+        <label for="e_steelLocation">Steel Location</label>
+        <input type="text" id="e_steelLocation" placeholder="e.g. Rack B-3" />
+      </div>
+      <div class="field">
         <label for="e_binsPerCoil">Bins per Coil</label>
         <input type="number" id="e_binsPerCoil" step="1" inputmode="numeric" />
       </div>
@@ -692,12 +856,18 @@ select option { background: var(--surface); }
 <script>
 'use strict';
 
-const STORAGE_KEY = 'dielog_v1';
+const STORAGE_KEY = 'dielog_v2';
 let dies        = [];
 let sortMode    = 'date';
 let editIndex   = null;
 let deferredInstall = null;
 let swReg       = null;
+let currentUser = null;  // { email, name, picture }
+
+// ── Google Client ID (for Sign-In only — no Drive scope needed) ───────────
+// REPLACE with your Google Cloud OAuth 2.0 Client ID
+// https://console.cloud.google.com/apis/credentials
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
 
 // ── Storage ──────────────────────────────────────────────────────────────
 function load() {
@@ -714,27 +884,30 @@ function addDie() {
   const id = document.getElementById('f_id').value.trim();
   if (!id) { showToast('Die ID is required', true); return; }
 
-  dies.unshift({
+  const newDie = {
     id,
-    press:       document.getElementById('f_press').value.trim(),
-    shutHeight:  document.getElementById('f_shutHeight').value || '',
-    guideRoller: document.getElementById('f_guideRoller').value || '',
-    spm:         document.getElementById('f_spm').value || '',
-    feedLength:  document.getElementById('f_feedLength').value || '',
-    steel:       document.getElementById('f_steel').value.trim(),
-    binsPerCoil: document.getElementById('f_binsPerCoil').value || '',
-    date:        document.getElementById('f_date').value || today(),
-    notes:       document.getElementById('f_notes').value.trim(),
-    createdAt:   Date.now()
-  });
+    press:         document.getElementById('f_press').value.trim(),
+    shutHeight:    document.getElementById('f_shutHeight').value || '',
+    guideRoller:   document.getElementById('f_guideRoller').value || '',
+    spm:           document.getElementById('f_spm').value || '',
+    feedLength:    document.getElementById('f_feedLength').value || '',
+    steel:         document.getElementById('f_steel').value.trim(),
+    steelLocation: document.getElementById('f_steelLocation').value.trim(),
+    binsPerCoil:   document.getElementById('f_binsPerCoil').value || '',
+    date:          document.getElementById('f_date').value || today(),
+    notes:         document.getElementById('f_notes').value.trim(),
+    createdAt:     Date.now()
+  };
+  dies.unshift(newDie);
 
   save();
-  ['f_id','f_press','f_shutHeight','f_guideRoller','f_spm','f_feedLength','f_steel','f_binsPerCoil','f_notes']
+  ['f_id','f_press','f_shutHeight','f_guideRoller','f_spm','f_feedLength','f_steel','f_steelLocation','f_binsPerCoil','f_notes']
     .forEach(i => document.getElementById(i).value = '');
   document.getElementById('f_date').value = today();
   renderList();
   updateStats();
   showToast('Die logged ✓');
+  autoSync(newDie); // fire-and-forget to master Sheet
 }
 
 // ── Delete ───────────────────────────────────────────────────────────────
@@ -756,6 +929,7 @@ function openEdit(idx) {
   document.getElementById('e_spm').value         = d.spm;
   document.getElementById('e_feedLength').value  = d.feedLength;
   document.getElementById('e_steel').value       = d.steel || '';
+  document.getElementById('e_steelLocation').value = d.steelLocation || '';
   document.getElementById('e_binsPerCoil').value = d.binsPerCoil || '';
   document.getElementById('e_date').value        = d.date;
   document.getElementById('e_notes').value       = d.notes || '';
@@ -772,6 +946,7 @@ function saveEdit() {
   d.spm         = document.getElementById('e_spm').value;
   d.feedLength  = document.getElementById('e_feedLength').value;
   d.steel       = document.getElementById('e_steel').value.trim();
+  d.steelLocation = document.getElementById('e_steelLocation').value.trim();
   d.binsPerCoil = document.getElementById('e_binsPerCoil').value;
   d.date        = document.getElementById('e_date').value;
   d.notes       = document.getElementById('e_notes').value.trim();
@@ -842,6 +1017,7 @@ function renderList() {
           ${d.spm         ? `<div class="meta-chip"><span class="meta-key">SPM</span><span class="meta-val">${d.spm}</span></div>` : ''}
           ${d.feedLength  ? `<div class="meta-chip"><span class="meta-key">Feed Length</span><span class="meta-val">${d.feedLength}&Prime;</span></div>` : ''}
           ${d.steel       ? `<div class="meta-chip"><span class="meta-key">Steel #</span><span class="meta-val">${esc(d.steel)}</span></div>` : ''}
+          ${d.steelLocation ? `<div class="meta-chip"><span class="meta-key">Steel Loc.</span><span class="meta-val">${esc(d.steelLocation)}</span></div>` : ''}
           ${d.binsPerCoil ? `<div class="meta-chip"><span class="meta-key">Bins/Coil</span><span class="meta-val">${d.binsPerCoil}</span></div>` : ''}
         </div>
         ${d.notes ? `<div class="die-notes">${esc(d.notes)}</div>` : ''}
@@ -870,9 +1046,9 @@ function updateStats() {
 // ── Export ───────────────────────────────────────────────────────────────
 function exportCSV() {
   if (!dies.length) { showToast('Nothing to export', true); return; }
-  const headers = ['Die ID','Press Number','Shut Height (in)','Guide Roller (in)','SPM','Feed Length (in)','Steel #','Bins per Coil','Date','Notes'];
+  const headers = ['Die ID','Press Number','Shut Height (in)','Guide Roller (in)','SPM','Feed Length (in)','Steel #','Steel Location','Bins per Coil','Date','Notes'];
   const rows = dies.map(d =>
-    [d.id,d.press,d.shutHeight,d.guideRoller,d.spm,d.feedLength,d.steel,d.binsPerCoil,d.date,d.notes]
+    [d.id,d.press,d.shutHeight,d.guideRoller,d.spm,d.feedLength,d.steel,d.steelLocation,d.binsPerCoil,d.date,d.notes]
       .map(v => `"${(v||'').toString().replace(/"/g,'""')}"`)
   );
   dl('dielog_export.csv','text/csv',[headers.join(','),...rows.map(r=>r.join(','))].join('\n'));
@@ -971,12 +1147,199 @@ document.getElementById('updateBtn').addEventListener('click', () => {
   }
 });
 
+// ── Auth ──────────────────────────────────────────────────────────────────
+function initAuth() {
+  // Check if already logged in (email session)
+  const saved = sessionStorage.getItem('dielog_user');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      showApp();
+      return;
+    } catch {}
+  }
+
+  // Render Google Sign-In button
+  if (window.google && GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
+      auto_select: false,
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('googleBtnContainer'),
+      { theme: 'filled_black', size: 'large', width: 300, text: 'signin_with' }
+    );
+  } else {
+    // Hide Google button if no client ID configured
+    document.getElementById('googleBtnContainer').innerHTML =
+      `<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);text-align:center;padding:0.5rem">
+        Google Sign-In requires a Client ID.<br>See setup instructions below.
+      </div>`;
+  }
+}
+
+function handleGoogleCredential(response) {
+  try {
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    currentUser = {
+      email:   payload.email,
+      name:    payload.name || payload.email,
+      picture: payload.picture || null,
+      type:    'google'
+    };
+    sessionStorage.setItem('dielog_user', JSON.stringify(currentUser));
+    showApp();
+  } catch(e) {
+    showToast('Google sign-in failed', true);
+  }
+}
+
+function emailLogin() {
+  const email = document.getElementById('authEmail').value.trim();
+  if (!email || !email.includes('@')) {
+    showToast('Enter a valid email address', true); return;
+  }
+  currentUser = { email, name: email, picture: null, type: 'email' };
+  sessionStorage.setItem('dielog_user', JSON.stringify(currentUser));
+  showApp();
+}
+
+function showApp() {
+  document.getElementById('authScreen').classList.add('hidden');
+  // Show user badge in header
+  const badge = document.getElementById('userBadge');
+  badge.style.display = 'flex';
+  document.getElementById('userEmailDisplay').textContent = currentUser.email;
+  const initial = document.getElementById('userInitial');
+  if (currentUser.picture) {
+    initial.innerHTML = `<img src="${currentUser.picture}" class="user-avatar" alt="" />`;
+    initial.style.border = 'none';
+    initial.style.background = 'none';
+  } else {
+    initial.textContent = (currentUser.name || currentUser.email)[0].toUpperCase();
+  }
+  // Load user-specific data
+  load();
+  renderList();
+  updateStats();
+}
+
+function signOut() {
+  if (!confirm('Sign out of DieLog?')) return;
+  currentUser = null;
+  sessionStorage.removeItem('dielog_user');
+  if (window.google) google.accounts.id.disableAutoSelect();
+  document.getElementById('authScreen').classList.remove('hidden');
+  document.getElementById('userBadge').style.display = 'none';
+  dies = [];
+  renderList();
+  updateStats();
+}
+
+// ── Google Apps Script Web App URL ───────────────────────────────────────
+// REPLACE with your deployed Apps Script Web App URL
+// (see setup instructions in Code.gs file)
+const SHEETS_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL';
+
+const SYNC_KEY = 'dielog_synced_ids';   // tracks which createdAt IDs are already synced
+
+function getSyncedIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(SYNC_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function markSynced(ids) {
+  const existing = getSyncedIds();
+  ids.forEach(id => existing.add(id));
+  localStorage.setItem(SYNC_KEY, JSON.stringify([...existing]));
+}
+
+// Called automatically after every addDie()
+async function autoSync(die) {
+  if (!SHEETS_URL || SHEETS_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') return;
+  try {
+    await sendToSheets([die]);
+    markSynced([die.createdAt]);
+    setSyncStatus(`Auto-synced to Sheets ✓  ${new Date().toLocaleTimeString()}`, 'ok');
+  } catch(e) {
+    setSyncStatus('Auto-sync failed — use Sync All when back online', 'err');
+  }
+}
+
+// Manual "Sync All" — sends every unsynced entry in one batch
+async function syncAllToSheets() {
+  if (!SHEETS_URL || SHEETS_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') {
+    setSyncStatus('⚠ Paste your Apps Script URL into SHEETS_URL first', 'err'); return;
+  }
+  if (!dies.length) { setSyncStatus('Nothing to sync', ''); return; }
+
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Syncing…';
+  setSyncStatus('Sending to Google Sheets…', '');
+
+  const synced = getSyncedIds();
+  const unsynced = dies.filter(d => !synced.has(d.createdAt));
+
+  if (!unsynced.length) {
+    setSyncStatus(`All ${dies.length} entries already synced ✓`, 'ok');
+    btn.disabled = false; btn.textContent = '⟳ Sync All to Sheets'; return;
+  }
+
+  try {
+    await sendToSheets(unsynced);
+    markSynced(unsynced.map(d => d.createdAt));
+    setSyncStatus(`✓ Synced ${unsynced.length} new entr${unsynced.length === 1 ? 'y' : 'ies'} · ${new Date().toLocaleTimeString()}`, 'ok');
+    showToast(`Synced ${unsynced.length} to Sheets ✓`);
+  } catch(e) {
+    setSyncStatus('Sync failed: ' + e.message, 'err');
+    showToast('Sync failed', true);
+  } finally {
+    btn.disabled = false; btn.textContent = '⟳ Sync All to Sheets';
+  }
+}
+
+async function sendToSheets(entries) {
+  const payload = entries.map(d => ({
+    timestamp:     new Date(d.createdAt).toISOString(),
+    user:          currentUser ? currentUser.email : 'unknown',
+    dieId:         d.id,
+    press:         d.press         || '',
+    shutHeight:    d.shutHeight    || '',
+    guideRoller:   d.guideRoller   || '',
+    spm:           d.spm           || '',
+    feedLength:    d.feedLength    || '',
+    steel:         d.steel         || '',
+    steelLocation: d.steelLocation || '',
+    binsPerCoil:   d.binsPerCoil   || '',
+    date:          d.date          || '',
+    notes:         d.notes         || ''
+  }));
+
+  const res = await fetch(SHEETS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' }, // Apps Script requires text/plain for no-CORS
+    body: JSON.stringify({ rows: payload })
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+}
+
+function setSyncStatus(msg, type) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = 'sync-status' + (type ? ` ${type}` : '');
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 document.getElementById('f_date').value = today();
-load();
-renderList();
-updateStats();
+// Auth handles load/render after sign-in
+window.addEventListener('load', () => {
+  initAuth();
+});
 syncOnlineState();
+
+// Also handle Google GIS library loading asynchronously
+window.onGoogleLibraryLoad = initAuth;
 
 // Enter to submit
 document.querySelectorAll('#addForm input').forEach(input =>
