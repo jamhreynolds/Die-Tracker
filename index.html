@@ -357,7 +357,7 @@ select option { background: var(--surface); }
   font-size: 0.55rem; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--muted);
 }
-.meta-val { font-family: var(Locationcationfont-mono); font-size: 0.82rem; color: var(--text); font-weight: 500; }
+.meta-val { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text); font-weight: 500; }
 .meta-val.highlight { color: var(--accent); }
 
 .die-notes {
@@ -604,7 +604,7 @@ select option { background: var(--surface); }
 <main>
 
   <!-- Install banner -->
-  <div class="install-banner visible" id="installBanner">
+  <div class="install-banner" id="installBanner">
     <span class="install-text" id="installText">📲 Install DieLog for offline access &amp; home screen</span>
     <button class="btn-install" id="installBtn">Install App</button>
     <button class="btn-install" id="installDismiss" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:0.75rem;padding:0.3rem 0.6rem;min-height:auto">✕</button>
@@ -650,12 +650,13 @@ select option { background: var(--surface); }
           <span class="unit-label">in</span>
         </div>
       </div>
-      <div class="fieldclass      <label for="f_steel">Steel number</label>
-        <input type="text" id="f_steel" placeholder="e.g. ST-4420" autocomplete="off" />
-      </div>
       <div class="field">
-        <label for="f_steelLocation">Steel Loc.</label>
+        <label for="f_steelLocation">Steel Location</label>
         <input type="text" id="f_steelLocation" placeholder="e.g. Rack B-3" autocomplete="off" />
+      </div>
+      <div class="field full">
+        <label for="f_steel">Steel #</label>
+        <input type="text" id="f_steel" placeholder="e.g. ST-4420" autocomplete="off" />
       </div>
       <div class="field">
         <label for="f_binsPerCoil">Bins per Coil</label>
@@ -719,12 +720,12 @@ select option { background: var(--surface); }
         <input type="number" id="e_feedLength" step="0.001" inputmode="decimal" />
       </div>
       <div class="field">
-        <label for="e_steel">Steel #</label>
-        <input type="text" id="e_steel" />
-      </div>
-      <div class="field">
         <label for="e_steelLocation">Steel Location</label>
         <input type="text" id="e_steelLocation" placeholder="e.g. Rack B-3" />
+      </div>
+      <div class="field full">
+        <label for="e_steel">Steel #</label>
+        <input type="text" id="e_steel" />
       </div>
       <div class="field">
         <label for="e_binsPerCoil">Bins per Coil</label>
