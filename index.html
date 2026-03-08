@@ -603,10 +603,11 @@ select option { background: var(--surface); }
 
 <main>
 
-  <!-- Install banner (shown by JS when installable) -->
-  <div class="install-banner" id="installBanner">
-    <span class="install-text">📲 Install DieLog for offline access &amp; home screen</span>
+  <!-- Install banner -->
+  <div class="install-banner visible" id="installBanner">
+    <span class="install-text" id="installText">📲 Install DieLog for offline access &amp; home screen</span>
     <button class="btn-install" id="installBtn">Install App</button>
+    <button class="btn-install" id="installDismiss" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:0.75rem;padding:0.3rem 0.6rem;min-height:auto">✕</button>
   </div>
 
   <!-- Log New Die -->
@@ -1023,25 +1024,60 @@ window.addEventListener('online',  () => { syncOnlineState(); showToast('Back on
 window.addEventListener('offline', () => { syncOnlineState(); showToast('You are offline', true); });
 
 // ── PWA install prompt ─────────────────────────────────────────────────────
+const installBanner  = document.getElementById('installBanner');
+const installBtn     = document.getElementById('installBtn');
+const installDismiss = document.getElementById('installDismiss');
+const installText    = document.getElementById('installText');
+
+// Hide if already running as installed PWA
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+  installBanner.classList.remove('visible');
+}
+
+// Hide if user previously dismissed
+if (localStorage.getItem('dielog_install_dismissed')) {
+  installBanner.classList.remove('visible');
+}
+
+// Capture the native prompt when available
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredInstall = e;
-  document.getElementById('installBanner').classList.add('visible');
+  installBtn.textContent = 'Install App';
+  installBanner.classList.add('visible');
 });
 
-document.getElementById('installBtn').addEventListener('click', async () => {
-  if (!deferredInstall) return;
-  deferredInstall.prompt();
-  const { outcome } = await deferredInstall.userChoice;
-  if (outcome === 'accepted') {
-    document.getElementById('installBanner').classList.remove('visible');
-    showToast('DieLog installed ✓');
+installBtn.addEventListener('click', async () => {
+  if (deferredInstall) {
+    // Native install prompt available
+    deferredInstall.prompt();
+    const { outcome } = await deferredInstall.userChoice;
+    if (outcome === 'accepted') {
+      installBanner.classList.remove('visible');
+      showToast('DieLog installed ✓');
+    }
+    deferredInstall = null;
+  } else {
+    // Fallback: show manual instructions based on browser/OS
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isIOS || isSafari) {
+      installText.textContent = '📲 Tap the Share button ↑ then "Add to Home Screen"';
+    } else {
+      installText.textContent = '📲 Open browser menu (⋮) → "Install app" or "Add to Home Screen"';
+    }
+    installBtn.textContent = 'Got it';
+    installBtn.onclick = () => installBanner.classList.remove('visible');
   }
-  deferredInstall = null;
+});
+
+installDismiss.addEventListener('click', () => {
+  installBanner.classList.remove('visible');
+  localStorage.setItem('dielog_install_dismissed', '1');
 });
 
 window.addEventListener('appinstalled', () => {
-  document.getElementById('installBanner').classList.remove('visible');
+  installBanner.classList.remove('visible');
   deferredInstall = null;
 });
 
