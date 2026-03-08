@@ -816,7 +816,6 @@ function addDie() {
     steel:         document.getElementById('f_steel').value.trim(),
     steelLocation: document.getElementById('f_steelLocation').value.trim(),
     binsPerCoil:   document.getElementById('f_binsPerCoil').value || '',
-    date:          document.getElementById('f_date').value || today(),
     notes:         document.getElementById('f_notes').value.trim(),
     createdAt:     Date.now()
   };
@@ -853,7 +852,6 @@ function openEdit(idx) {
   document.getElementById('e_steel').value       = d.steel || '';
   document.getElementById('e_steelLocation').value = d.steelLocation || '';
   document.getElementById('e_binsPerCoil').value = d.binsPerCoil || '';
-  document.getElementById('e_date').value        = d.date;
   document.getElementById('e_notes').value       = d.notes || '';
   document.getElementById('editModal').classList.add('open');
   document.getElementById('e_id').focus();
@@ -869,8 +867,7 @@ function saveEdit() {
   d.feedLength  = document.getElementById('e_feedLength').value;
   d.steel       = document.getElementById('e_steel').value.trim();
   d.steelLocation = document.getElementById('e_steelLocation').value.trim();
-  d.binsPerCoil = document.getElementById('e_binsPerCoil').value;
-  d.date        = document.getElementById('e_date').value;
+  d.binsPerCoil = document.getElementById('e_binsPerCoil').value,();
   d.notes       = document.getElementById('e_notes').value.trim();
   save(); closeModal(); renderList(); updateStats();
   showToast('Updated ✓');
@@ -893,7 +890,6 @@ document.addEventListener('keydown', e => {
 // ── Sort ─────────────────────────────────────────────────────────────────
 function setSort(mode) {
   sortMode = mode;
-  document.getElementById('sortDate').classList.toggle('active', mode === 'date');
   document.getElementById('sortId').classList.toggle('active', mode === 'id');
   renderList();
 }
@@ -1004,21 +1000,14 @@ function showToast(msg, isErr = false) {
   setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-function today() { return new Date().toISOString().split('T')[0]; }
-
-// ── Offline / Online ──────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────li/ ── Offline / Online ──────────────────────────────────────────────────────
 function syncOnlineState() {
   document.body.classList.toggle('offline', !navigator.onLine);
 }
 window.addEventListener('online',  () => { syncOnlineState(); showToast('Back online ✓'); });
 window.addEventListener('offline', () => { syncOnlineState(); showToast('You are offline', true); });
 
-// ── PWA install prompt ─────────────────────────────────────────────────────
-const installBanner  = document.getElementById('installBanner');
-const installBtn     = document.getElementById('installBtn');
-const installDismiss = document.getElementById('installDismiss');
-const installText    = document.getElementById('installText');
+// ── PWinstallll prompt ────────────────────────────────────────────────────co
 
 // Hide if already running as installed PWA
 if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
