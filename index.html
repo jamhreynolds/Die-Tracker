@@ -127,10 +127,24 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   height: calc(60px + var(--safe-top));
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+/* ── Sticky search bar ──────────────────────────────────── */
+.search-bar-sticky {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 1.5rem;
+  position: sticky;
+  top: calc(60px + var(--safe-top));
+  z-index: 99;
 }
 
 .logo {
@@ -473,6 +487,18 @@ select option { background: var(--surface); }
 .btn-import { border-color: var(--accent) !important; color: var(--accent) !important; }
 .btn-import:hover { background: rgba(240,165,0,0.1) !important; }
 
+/* ── Merge option radio rows ─────────────────────────────── */
+.merge-opt {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  background: var(--surface2); border: 1px solid var(--border);
+  padding: 0.65rem 0.8rem; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.merge-opt:has(input:checked) { border-color: var(--accent); }
+.merge-opt input[type="radio"] { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+.merge-opt-text { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text); line-height: 1.5; }
+.merge-opt-text strong { color: var(--accent); display: block; font-size: 0.72rem; }
+
 /* ── Toast ──────────────────────────────────────────────── */
 .toast {
   position: fixed;
@@ -565,6 +591,16 @@ select option { background: var(--surface); }
   </div>
 </header>
 
+<!-- Search bar below header -->
+<div class="search-bar-sticky">
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="search" id="searchInput" placeholder="Search die ID, steel #, location..." oninput="renderList()" autocomplete="off" />
+  </div>
+  <button class="sort-btn active" id="sortDate" onclick="setSort('date')">Date ↓</button>
+  <button class="sort-btn" id="sortId" onclick="setSort('id')">ID ↑</button>
+</div>
+
 <main>
 
   <!-- Install banner (shown by JS when installable) -->
@@ -637,23 +673,13 @@ select option { background: var(--surface); }
     <button class="btn-add" onclick="addDie()">＋ Log Die</button>
   </div>
 
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <div class="search-wrap">
-      <span class="search-icon">⌕</span>
-      <input type="search" id="searchInput" placeholder="Search by die ID..." oninput="renderList()" autocomplete="off" />
-    </div>
-    <button class="sort-btn active" id="sortDate" onclick="setSort('date')">Date ↓</button>
-    <button class="sort-btn" id="sortId" onclick="setSort('id')">ID ↑</button>
-  </div>
-
   <!-- Export / Sync -->
   <div class="export-bar">
     <button class="btn-export" onclick="exportCSV()">⬇ CSV</button>
     <button class="btn-export" onclick="exportJSON()">⬇ JSON</button>
-    <button class="btn-export btn-import" onclick="document.getElementById('csvFileInput').click()">⬆ Import CSV</button>
+    <button class="btn-export btn-import" onclick="document.getElementById('csvFileInput').click()">⬆ Import / Merge CSV</button>
     <button class="btn-export btn-sync" onclick="syncAllToSheets()" id="syncBtn">⟳ Sync All to Sheets</button>
-    <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(event)" />
+    <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="previewImport(event)" />
   </div>
   <div class="sync-status" id="syncStatus"></div>
 
@@ -716,6 +742,39 @@ select option { background: var(--surface); }
     <div class="modal-actions">
       <button class="btn-save" onclick="saveEdit()">Save Changes</button>
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Merge / Import modal -->
+<div class="modal-overlay" id="mergeModal" role="dialog" aria-modal="true" aria-label="Import & Merge CSV">
+  <div class="modal">
+    <div class="modal-title">Import CSV</div>
+    <div id="mergeStats" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.8;"></div>
+    <div class="section-label" style="margin-bottom:0.6rem;font-size:0.7rem;">// How to handle duplicates?</div>
+    <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.25rem;">
+      <label class="merge-opt">
+        <input type="radio" name="mergeMode" value="skip" checked />
+        <span class="merge-opt-text">
+          <strong>Skip duplicates</strong> — keep existing entries unchanged
+        </span>
+      </label>
+      <label class="merge-opt">
+        <input type="radio" name="mergeMode" value="overwrite" />
+        <span class="merge-opt-text">
+          <strong>Overwrite duplicates</strong> — replace existing entries with imported data
+        </span>
+      </label>
+      <label class="merge-opt">
+        <input type="radio" name="mergeMode" value="append" />
+        <span class="merge-opt-text">
+          <strong>Append all</strong> — add everything, even if ID already exists
+        </span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="confirmImport()">Import</button>
+      <button class="btn-cancel" onclick="cancelImport()">Cancel</button>
     </div>
   </div>
 </div>
@@ -851,7 +910,9 @@ function getSorted() {
   const q = document.getElementById('searchInput').value.toLowerCase();
   let filtered = dies.filter(d =>
     d.id.toLowerCase().includes(q) ||
-    (d.press || '').toLowerCase().includes(q)
+    (d.press || '').toLowerCase().includes(q) ||
+    (d.steel || '').toLowerCase().includes(q) ||
+    (d.steelLocation || '').toLowerCase().includes(q)
   );
   return filtered.sort((a, b) =>
     sortMode === 'date'
@@ -1018,72 +1079,144 @@ document.getElementById('updateBtn').addEventListener('click', () => {
   }
 });
 
-// ── CSV Import ────────────────────────────────────────────────────────────
-function importCSV(event) {
+// ── CSV Import & Merge ────────────────────────────────────────────────────
+let _pendingImport = null; // holds parsed rows before user confirms
+
+function parseCSVText(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return null;
+
+  const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim().toLowerCase());
+  const col = name => headers.findIndex(h => h.includes(name));
+
+  const idCol       = col('die id') !== -1 ? col('die id') : col('id');
+  const pressCol    = col('press');
+  const shutCol     = col('shut height');
+  const guideCol    = col('guide roller');
+  const spmCol      = col('spm');
+  const feedCol     = col('feed length');
+  const steelCol    = col('steel #') !== -1 ? col('steel #') : (col('steel number') !== -1 ? col('steel number') : col('steel'));
+  const steelLocCol = col('steel location');
+  const binsCol     = col('bins per coil');
+  const dateCol     = col('date');
+  const notesCol    = col('notes');
+
+  if (idCol === -1) return null;
+
+  const parseCell = (cells, idx) => {
+    if (idx === -1 || idx >= cells.length) return '';
+    return (cells[idx] || '').replace(/^"|"$/g,'').trim();
+  };
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    // Robust CSV split respecting quoted fields
+    const cells = [];
+    let cur = '', inQ = false;
+    for (const ch of lines[i] + ',') {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cells.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+    const id = parseCell(cells, idCol);
+    if (!id) continue;
+    rows.push({
+      id,
+      press:         parseCell(cells, pressCol),
+      shutHeight:    parseCell(cells, shutCol),
+      guideRoller:   parseCell(cells, guideCol),
+      spm:           parseCell(cells, spmCol),
+      feedLength:    parseCell(cells, feedCol),
+      steel:         parseCell(cells, steelCol),
+      steelLocation: parseCell(cells, steelLocCol),
+      binsPerCoil:   parseCell(cells, binsCol),
+      date:          parseCell(cells, dateCol),
+      notes:         parseCell(cells, notesCol),
+      createdAt:     Date.now() + i
+    });
+  }
+  return rows;
+}
+
+function previewImport(event) {
   const file = event.target.files[0];
   if (!file) return;
+  event.target.value = '';
+
   const reader = new FileReader();
-  reader.onload = function(e) {
-    const text = e.target.result;
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) { showToast('CSV appears empty', true); return; }
+  reader.onload = e => {
+    const rows = parseCSVText(e.target.result);
+    if (!rows) { showToast('No "Die ID" column found in CSV', true); return; }
+    if (!rows.length) { showToast('CSV appears empty', true); return; }
 
-    // Parse header row to find column indices (flexible column order)
-    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim().toLowerCase());
-    const col = name => headers.findIndex(h => h.includes(name));
+    // Count duplicates vs new
+    const existingIds = new Set(dies.map(d => d.id.toLowerCase()));
+    const dupes = rows.filter(r => existingIds.has(r.id.toLowerCase())).length;
+    const newEntries = rows.length - dupes;
 
-    const idCol       = col('die id') !== -1 ? col('die id') : col('id');
-    const pressCol    = col('press');
-    const shutCol     = col('shut height');
-    const guideCol    = col('guide roller');
-    const spmCol      = col('spm');
-    const feedCol     = col('feed length');
-    const steelCol    = col('steel #') !== -1 ? col('steel #') : col('steel number');
-    const steelLocCol = col('steel location');
-    const binsCol     = col('bins per coil');
-    const dateCol     = col('date');
-    const notesCol    = col('notes');
+    _pendingImport = rows;
 
-    if (idCol === -1) { showToast('No "Die ID" column found in CSV', true); return; }
+    document.getElementById('mergeStats').innerHTML =
+      `<span style="color:var(--text)">File:</span> <span style="color:var(--accent)">${file.name}</span><br>` +
+      `<span style="color:var(--text)">Rows in file:</span> <span style="color:var(--accent)">${rows.length}</span><br>` +
+      `<span style="color:var(--text)">New (no match):</span> <span style="color:var(--success)">${newEntries}</span><br>` +
+      `<span style="color:var(--text)">Duplicate IDs:</span> <span style="color:${dupes > 0 ? 'var(--accent2)' : 'var(--muted)'}">${dupes}</span>`;
 
-    const parseCell = (cells, idx) => idx === -1 ? '' : (cells[idx] || '').replace(/^"|"$/g,'').trim();
-
-    let imported = 0, skipped = 0;
-    const existingIds = new Set(dies.map(d => d.id));
-
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      // Handle quoted commas
-      const cells = lines[i].match(/(".*?"|[^,]+|(?<=,)(?=,)|(?<=,)$|^(?=,))/g) || lines[i].split(',');
-
-      const id = parseCell(cells, idCol);
-      if (!id) { skipped++; continue; }
-
-      const newDie = {
-        id,
-        press:         parseCell(cells, pressCol),
-        shutHeight:    parseCell(cells, shutCol),
-        guideRoller:   parseCell(cells, guideCol),
-        spm:           parseCell(cells, spmCol),
-        feedLength:    parseCell(cells, feedCol),
-        steel:         parseCell(cells, steelCol),
-        steelLocation: parseCell(cells, steelLocCol),
-        binsPerCoil:   parseCell(cells, binsCol),
-        date:          parseCell(cells, dateCol),
-        notes:         parseCell(cells, notesCol),
-        createdAt:     Date.now() + i
-      };
-      dies.push(newDie);
-      imported++;
-    }
-
-    save(); renderList(); updateStats();
-    event.target.value = ''; // reset input so same file can be re-imported
-    showToast(`Imported ${imported} entr${imported === 1 ? 'y' : 'ies'}${skipped ? `, ${skipped} skipped` : ''} ✓`);
+    document.getElementById('mergeModal').classList.add('open');
   };
   reader.onerror = () => showToast('Failed to read file', true);
   reader.readAsText(file);
 }
+
+function confirmImport() {
+  if (!_pendingImport) return;
+  const mode = document.querySelector('input[name="mergeMode"]:checked').value;
+  const rows = _pendingImport;
+  _pendingImport = null;
+  document.getElementById('mergeModal').classList.remove('open');
+
+  let added = 0, updated = 0, skipped = 0;
+
+  if (mode === 'append') {
+    rows.forEach(r => { dies.push(r); added++; });
+  } else {
+    const existingMap = new Map(dies.map((d, i) => [d.id.toLowerCase(), i]));
+    rows.forEach(r => {
+      const key = r.id.toLowerCase();
+      if (existingMap.has(key)) {
+        if (mode === 'overwrite') {
+          const idx = existingMap.get(key);
+          dies[idx] = { ...dies[idx], ...r, createdAt: dies[idx].createdAt };
+          updated++;
+        } else {
+          skipped++;
+        }
+      } else {
+        dies.push(r);
+        existingMap.set(key, dies.length - 1);
+        added++;
+      }
+    });
+  }
+
+  save(); renderList(); updateStats();
+
+  const parts = [];
+  if (added)   parts.push(`${added} added`);
+  if (updated) parts.push(`${updated} updated`);
+  if (skipped) parts.push(`${skipped} skipped`);
+  showToast('Import: ' + parts.join(', ') + ' ✓');
+}
+
+function cancelImport() {
+  _pendingImport = null;
+  document.getElementById('mergeModal').classList.remove('open');
+}
+
+document.getElementById('mergeModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('mergeModal')) cancelImport();
+});
 
 // ── Google Apps Script Web App URL ───────────────────────────────────────
 // REPLACE with your deployed Apps Script Web App URL
