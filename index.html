@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <!-- ═══ PWA Core ═══════════════════════════════════════════════════════ -->
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0a0a0f">
 
 <!-- ═══ Android / Chrome install ══════════════════════════════════════ -->
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="DieLog">
+<meta name="application-name" content="Press Notes">
 
 <!-- ═══ iOS "Add to Home Screen" ══════════════════════════════════════
      Safari does NOT use the manifest for icons — these tags are required.
@@ -18,7 +18,7 @@
 ══════════════════════════════════════════════════════════════════════ -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="DieLog">
+<meta name="apple-mobile-web-app-title" content="Press Notes">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
@@ -29,8 +29,8 @@
 <!-- Standard -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-<meta name="description" content="Press Room Die Tracker — log shut height, guide roller, SPM and feed length. Works offline.">
-<title>DieLog — Press Room Tracker</title>
+<meta name="description" content="Press Notes — log shut height, guide roller, SPM and feed length. Works offline.">
+<title>Press Notes — Press Room Tracker</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -315,7 +315,36 @@ select option { background: var(--surface); }
   color: var(--accent);
 }
 
-/* ── Die cards ──────────────────────────────────────────── */
+/* ── Die ID live-search highlight ───────────────────────── */
+.die-card.id-match {
+  border-color: var(--accent);
+  border-left-color: var(--accent);
+  background: #1a1a26;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 18px rgba(240,165,0,0.15);
+}
+.die-card.id-match .die-id {
+  text-shadow: 0 0 20px rgba(255,238,0,0.75);
+}
+.id-match-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #000;
+  background: var(--accent);
+  padding: 1px 5px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+.f-id-hint {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+  min-height: 0.9rem;
+}
 .die-list { display: flex; flex-direction: column; gap: 0.6rem; }
 
 .die-card {
@@ -568,21 +597,159 @@ select option { background: var(--surface); }
 }
 .sync-status.ok  { color: var(--success); }
 .sync-status.err { color: var(--danger); }
+
+/* ── EULA Gate ───────────────────────────────────────────── */
+#eula-gate {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 1.5rem;
+  padding-top: calc(1.5rem + var(--safe-top));
+  padding-bottom: calc(1.5rem + var(--safe-bot));
+}
+#eula-gate.hidden { display: none; }
+.eula-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  width: 100%; max-width: 620px;
+  display: flex; flex-direction: column;
+  max-height: 88vh;
+}
+.eula-header {
+  padding: 1.25rem 1.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.eula-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem; font-weight: 900;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: #ffee00;
+  text-shadow: 0 0 18px rgba(255,238,0,0.5);
+  line-height: 1;
+}
+.eula-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.65rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+  margin-top: 0.35rem;
+}
+.eula-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.25rem 1.5rem;
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.72rem; line-height: 1.7;
+  color: var(--text);
+}
+.eula-body h3 {
+  font-family: var(--font-mono);
+  font-size: 0.65rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--accent);
+  margin: 1.1rem 0 0.3rem;
+}
+.eula-body h3:first-child { margin-top: 0; }
+.eula-body p { color: #b0b0c0; margin-bottom: 0.25rem; }
+.eula-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.eula-check-row {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  margin-bottom: 0.9rem; cursor: pointer;
+}
+.eula-check-row input[type="checkbox"] {
+  width: 18px; height: 18px; flex-shrink: 0;
+  accent-color: var(--accent); margin-top: 1px;
+  cursor: pointer;
+}
+.eula-check-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem; color: var(--text); line-height: 1.5;
+}
+.btn-eula-agree {
+  background: var(--accent); color: #000; border: none;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 1rem; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.75rem 1.5rem;
+  cursor: pointer; width: 100%; min-height: 48px;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn-eula-agree:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-eula-agree:not(:disabled):hover { background: #ffb820; }
+.eula-scroll-hint {
+  font-family: var(--font-mono);
+  font-size: 0.6rem; color: var(--muted);
+  text-align: center; margin-top: 0.5rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
 </style>
 </head>
 <body>
+
+<!-- ═══ EULA Gate ════════════════════════════════════════════════════════ -->
+<div id="eula-gate">
+  <div class="eula-box">
+    <div class="eula-header">
+      <div class="eula-title">Press Notes</div>
+      <div class="eula-subtitle">End User License Agreement — Private Use Only</div>
+    </div>
+    <div class="eula-body" id="eulaBody">
+      <h3>1. Acceptance of Terms</h3>
+      <p>By accessing or using Press Notes ("the App"), you agree to be bound by this End User License Agreement ("EULA"). If you do not agree to these terms, you may not use the App.</p>
+
+      <h3>2. Independent Tool — No Affiliation Disclaimer</h3>
+      <p>Press Notes is an independently developed, privately owned tool. IT IS IN NO WAY, SHAPE, OR FORM AFFILIATED WITH, ENDORSED BY, SPONSORED BY, OR CONNECTED TO STANLEY BLACK &amp; DECKER, INC. OR ANY OF ITS SUBSIDIARIES, BRANDS, OR AFFILIATES. All trademarks, brand names, and company names referenced are the property of their respective owners.</p>
+
+      <h3>3. Private Use Only</h3>
+      <p>This App is strictly for private, personal use by authorized individuals only. It is not to be distributed, published, sold, sublicensed, or made available to the general public in any form. Unauthorized sharing or distribution of this App is strictly prohibited.</p>
+
+      <h3>4. No Liability for Data Loss</h3>
+      <p>All data entered into the App is stored locally on your device. The owner makes no warranty that data will be preserved across browser updates, device resets, cache clearing, or any other event. You are solely responsible for maintaining backups of your records using the built-in CSV or JSON export features.</p>
+      <p>TO THE FULLEST EXTENT PERMITTED BY LAW, THE OWNER SHALL NOT BE LIABLE FOR ANY LOSS OF DATA, LOSS OF PRODUCTIVITY, OR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR RELATED TO YOUR USE OF THIS APP.</p>
+
+      <h3>5. No Warranty</h3>
+      <p>The App is provided "AS IS" without warranty of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement. Use of this App is entirely at your own risk.</p>
+
+      <h3>6. No Redistribution</h3>
+      <p>You may not copy, modify, distribute, sell, or transfer the App or any portion of it to any third party. Reverse engineering or decompiling the App is prohibited.</p>
+
+      <h3>7. Modifications to Terms</h3>
+      <p>The owner reserves the right to modify this EULA at any time. Continued use of the App following any changes constitutes your acceptance of the revised terms.</p>
+
+      <h3>8. Termination</h3>
+      <p>This license is effective until terminated. Your rights under this EULA terminate automatically if you fail to comply with any of its terms.</p>
+    </div>
+    <div class="eula-footer">
+      <label class="eula-check-row">
+        <input type="checkbox" id="eulaCheck" onchange="document.getElementById('eulaAgreeBtn').disabled = !this.checked" />
+        <span class="eula-check-label">I have read, understood, and agree to the Press Notes End User License Agreement and Terms of Use.</span>
+      </label>
+      <button class="btn-eula-agree" id="eulaAgreeBtn" disabled onclick="acceptEula()">
+        I Agree — Enter Press Notes
+      </button>
+      <div class="eula-scroll-hint" id="eulaScrollHint">↓ Scroll to read full agreement</div>
+    </div>
+  </div>
+</div>
+
 
 <!-- Offline indicator -->
 <div id="offline-bar">⚡ You are offline — all data is saved locally</div>
 
 <!-- SW update banner -->
 <div id="update-bar">
-  <span>🔄 A new version of DieLog is available</span>
+  <span>🔄 A new version of Press Notes is available</span>
   <button id="updateBtn">Update Now</button>
 </div>
 
 <header>
-  <div class="logo">Die<span>Log</span></div>
+  <div class="logo">Press<span>Notes</span></div>
   <div class="header-right">
     <div class="header-count">
       <strong id="totalCount">0</strong>
@@ -591,21 +758,14 @@ select option { background: var(--surface); }
   </div>
 </header>
 
-<!-- Search bar below header -->
-<div class="search-bar-sticky">
-  <div class="search-wrap">
-    <span class="search-icon">⌕</span>
-    <input type="search" id="searchInput" placeholder="Search die ID, steel #, location..." oninput="renderList()" autocomplete="off" />
-  </div>
-  <button class="sort-btn active" id="sortDate" onclick="setSort('date')">Date ↓</button>
-  <button class="sort-btn" id="sortId" onclick="setSort('id')">ID ↑</button>
-</div>
+<!-- Sort bar below header -->
+<div class="search-bar-sticky"></div>
 
 <main>
 
   <!-- Install banner -->
   <div class="install-banner" id="installBanner">
-    <span class="install-text" id="installText">📲 Install DieLog for offline access &amp; home screen</span>
+    <span class="install-text" id="installText">📲 Install Press Notes for offline access &amp; home screen</span>
     <button class="btn-install" id="installBtn">Install App</button>
     <button class="btn-install" id="installDismiss" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:0.75rem;padding:0.3rem 0.6rem;min-height:auto">✕</button>
   </div>
@@ -614,9 +774,10 @@ select option { background: var(--surface); }
   <div class="section-label" id="log">// Log New Die</div>
   <div class="form-card">
     <div class="form-grid" id="addForm">
-      <div class="field">
+      <div class="field" style="grid-column: span 2;">
         <label for="f_id">Die ID</label>
-        <input type="text" id="f_id" placeholder="e.g. D-0042" autocomplete="off" />
+        <input type="text" id="f_id" placeholder="e.g. D-0042" autocomplete="off" oninput="onDieIdInput()" />
+        <div class="f-id-hint" id="f_id_hint"></div>
       </div>
       <div class="field">
         <label for="f_press">Press Number</label>
@@ -630,7 +791,7 @@ select option { background: var(--surface); }
         </div>
       </div>
       <div class="field">
-        <label for="f_guideRoller">Meas. at Guide Roller</label>
+        <label for="f_guideRoller">Guide Roller Set</label>
         <div class="unit-wrap">
           <input type="number" id="f_guideRoller" placeholder="0.000" step="0.001" inputmode="decimal" />
           <span class="unit-label">in</span>
@@ -651,20 +812,24 @@ select option { background: var(--surface); }
         </div>
       </div>
       <div class="field">
-        <label for="f_steelLocation">Steel Location</label>
+        <label for="f_steelLocation">Steel Loc.</label>
         <input type="text" id="f_steelLocation" placeholder="e.g. Rack B-3" autocomplete="off" />
       </div>
       <div class="field full">
         <label for="f_steel">Steel #</label>
-        <input type="text" id="f_steel" placeholder="e.g. ST-4420" autocomplete="off" />
+        <input type="text" id="f_steel" placeholder="e.g. ST-4420" autocomplete="off" oninput="onSteelInput()" />
+        <div class="f-id-hint" id="f_steel_hint"></div>
       </div>
       <div class="field">
         <label for="f_binsPerCoil">Bins per Coil</label>
         <input type="number" id="f_binsPerCoil" placeholder="0" step="1" inputmode="numeric" />
       </div>
       <div class="field">
-        <label for="f_date">Date</label>
-        <input type="date" id="f_date" />
+        <label for="f_oilSetting">Oil Setting</label>
+        <div class="unit-wrap">
+          <input type="number" id="f_oilSetting" placeholder="0.0" step="0.1" inputmode="decimal" />
+          <span class="unit-label">ms</span>
+        </div>
       </div>
       <div class="field full">
         <label for="f_notes">Notes (optional)</label>
@@ -695,7 +860,7 @@ select option { background: var(--surface); }
   <div class="modal">
     <div class="modal-title">Edit Die</div>
     <div class="form-grid">
-      <div class="field">
+      <div class="field" style="grid-column: span 2;">
         <label for="e_id">Die ID</label>
         <input type="text" id="e_id" />
       </div>
@@ -708,7 +873,7 @@ select option { background: var(--surface); }
         <input type="number" id="e_shutHeight" step="0.001" inputmode="decimal" />
       </div>
       <div class="field">
-        <label for="e_guideRoller">Guide Roller (in)</label>
+        <label for="e_guideRoller">Guide Roller Set (in)</label>
         <input type="number" id="e_guideRoller" step="0.001" inputmode="decimal" />
       </div>
       <div class="field">
@@ -720,7 +885,7 @@ select option { background: var(--surface); }
         <input type="number" id="e_feedLength" step="0.001" inputmode="decimal" />
       </div>
       <div class="field">
-        <label for="e_steelLocation">Steel Location</label>
+        <label for="e_steelLocation">Steel Loc.</label>
         <input type="text" id="e_steelLocation" placeholder="e.g. Rack B-3" />
       </div>
       <div class="field full">
@@ -732,8 +897,11 @@ select option { background: var(--surface); }
         <input type="number" id="e_binsPerCoil" step="1" inputmode="numeric" />
       </div>
       <div class="field">
-        <label for="e_date">Date</label>
-        <input type="date" id="e_date" />
+        <label for="e_oilSetting">Oil Setting</label>
+        <div class="unit-wrap">
+          <input type="number" id="e_oilSetting" step="0.1" inputmode="decimal" />
+          <span class="unit-label">ms</span>
+        </div>
       </div>
       <div class="field full">
         <label for="e_notes">Notes</label>
@@ -776,6 +944,22 @@ select option { background: var(--surface); }
     <div class="modal-actions">
       <button class="btn-save" onclick="confirmImport()">Import</button>
       <button class="btn-cancel" onclick="cancelImport()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Overwrite prompt modal -->
+<div class="modal-overlay" id="overwriteModal" role="dialog" aria-modal="true" aria-label="Duplicate Die ID">
+  <div class="modal">
+    <div class="modal-title">Duplicate ID</div>
+    <p style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);line-height:1.7;margin-bottom:1.25rem;">
+      A die with ID <strong style="color:var(--accent)" id="overwritePromptId"></strong> already exists.<br>
+      What would you like to do?
+    </p>
+    <div class="modal-actions" style="flex-direction:column;gap:0.5rem;">
+      <button class="btn-save" onclick="confirmOverwrite()" style="background:var(--accent2);">⟳ Overwrite Existing Entry</button>
+      <button class="btn-save" onclick="confirmAddNew()">＋ Log as New Entry</button>
+      <button class="btn-cancel" onclick="cancelOverwrite()">Cancel</button>
     </div>
   </div>
 </div>
@@ -825,20 +1009,129 @@ function addDie() {
     steel:         document.getElementById('f_steel').value.trim(),
     steelLocation: document.getElementById('f_steelLocation').value.trim(),
     binsPerCoil:   document.getElementById('f_binsPerCoil').value || '',
-    date:          document.getElementById('f_date').value || today(),
+    oilSetting:    document.getElementById('f_oilSetting').value || '',
     notes:         document.getElementById('f_notes').value.trim(),
     createdAt:     Date.now()
   };
-  dies.unshift(newDie);
 
+  // Check if an entry with this ID already exists
+  const existingIdx = dies.findIndex(d => d.id.toLowerCase() === id.toLowerCase());
+  if (existingIdx !== -1) {
+    showOverwritePrompt(newDie, existingIdx);
+    return;
+  }
+
+  commitAdd(newDie);
+}
+
+function commitAdd(newDie) {
+  dies.unshift(newDie);
   save();
-  ['f_id','f_press','f_shutHeight','f_guideRoller','f_spm','f_feedLength','f_steel','f_steelLocation','f_binsPerCoil','f_notes']
-    .forEach(i => document.getElementById(i).value = '');
-  document.getElementById('f_date').value = today();
+  clearAddForm();
   renderList();
   updateStats();
-  showToast('Die logged ✓');
-  autoSync(newDie); // fire-and-forget to master Sheet
+  showToast('Entry logged ✓');
+  autoSync(newDie);
+}
+
+function commitOverwrite(newDie, existingIdx) {
+  newDie.createdAt = dies[existingIdx].createdAt; // preserve original timestamp
+  dies[existingIdx] = newDie;
+  save();
+  clearAddForm();
+  renderList();
+  updateStats();
+  showToast('Entry updated ✓');
+  autoSync(newDie);
+}
+
+function clearAddForm() {
+  ['f_id','f_press','f_shutHeight','f_guideRoller','f_spm','f_feedLength','f_steel','f_steelLocation','f_binsPerCoil','f_oilSetting','f_notes']
+    .forEach(i => document.getElementById(i).value = '');
+  document.getElementById('f_id_hint').textContent = '';
+  document.getElementById('f_steel_hint').textContent = '';
+  renderList();
+}
+
+// ── Overwrite prompt modal ────────────────────────────────────────────────
+let _pendingOverwrite = null;
+
+function showOverwritePrompt(newDie, existingIdx) {
+  _pendingOverwrite = { newDie, existingIdx };
+  document.getElementById('overwritePromptId').textContent = newDie.id;
+  document.getElementById('overwriteModal').classList.add('open');
+}
+
+function confirmOverwrite() {
+  if (!_pendingOverwrite) return;
+  const { newDie, existingIdx } = _pendingOverwrite;
+  _pendingOverwrite = null;
+  document.getElementById('overwriteModal').classList.remove('open');
+  commitOverwrite(newDie, existingIdx);
+}
+
+function confirmAddNew() {
+  if (!_pendingOverwrite) return;
+  const { newDie } = _pendingOverwrite;
+  _pendingOverwrite = null;
+  document.getElementById('overwriteModal').classList.remove('open');
+  newDie.createdAt = Date.now();
+  commitAdd(newDie);
+}
+
+function cancelOverwrite() {
+  _pendingOverwrite = null;
+  document.getElementById('overwriteModal').classList.remove('open');
+}
+
+// ── Die ID live search ────────────────────────────────────────────────────
+function onDieIdInput() {
+  const val = document.getElementById('f_id').value.trim();
+  renderList();
+
+  const hint = document.getElementById('f_id_hint');
+  if (!val) { hint.textContent = ''; return; }
+
+  const matches = dies.filter(d => d.id.toLowerCase().includes(val.toLowerCase()));
+  if (matches.length > 0) {
+    hint.textContent = `${matches.length} match${matches.length > 1 ? 'es' : ''} found`;
+  } else {
+    hint.textContent = '';
+  }
+}
+
+function onSteelInput() {
+  const val = document.getElementById('f_steel').value.trim();
+  renderList();
+
+  const hint = document.getElementById('f_steel_hint');
+  if (!val) { hint.textContent = ''; return; }
+
+  const matches = dies.filter(d => (d.steel || '').toLowerCase().includes(val.toLowerCase()));
+  if (matches.length > 0) {
+    hint.textContent = `${matches.length} match${matches.length > 1 ? 'es' : ''} found`;
+  } else {
+    hint.textContent = '';
+  }
+}
+
+function populateForm(idx) {
+  const d = dies[idx];
+  document.getElementById('f_id').value            = d.id;
+  document.getElementById('f_press').value         = d.press        || '';
+  document.getElementById('f_shutHeight').value    = d.shutHeight   || '';
+  document.getElementById('f_guideRoller').value   = d.guideRoller  || '';
+  document.getElementById('f_spm').value           = d.spm          || '';
+  document.getElementById('f_feedLength').value    = d.feedLength   || '';
+  document.getElementById('f_steel').value         = d.steel        || '';
+  document.getElementById('f_steelLocation').value = d.steelLocation || '';
+  document.getElementById('f_binsPerCoil').value   = d.binsPerCoil  || '';
+  document.getElementById('f_oilSetting').value    = d.oilSetting   || '';
+  document.getElementById('f_notes').value         = d.notes        || '';
+  document.getElementById('f_id_hint').textContent    = '✓ Loaded — edit fields and save to update.';
+  document.getElementById('f_steel_hint').textContent = '';
+  renderList();
+  document.getElementById('log').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Delete ───────────────────────────────────────────────────────────────
@@ -862,7 +1155,7 @@ function openEdit(idx) {
   document.getElementById('e_steel').value       = d.steel || '';
   document.getElementById('e_steelLocation').value = d.steelLocation || '';
   document.getElementById('e_binsPerCoil').value = d.binsPerCoil || '';
-  document.getElementById('e_date').value        = d.date;
+  document.getElementById('e_oilSetting').value    = d.oilSetting || '';
   document.getElementById('e_notes').value       = d.notes || '';
   document.getElementById('editModal').classList.add('open');
   document.getElementById('e_id').focus();
@@ -879,7 +1172,7 @@ function saveEdit() {
   d.steel       = document.getElementById('e_steel').value.trim();
   d.steelLocation = document.getElementById('e_steelLocation').value.trim();
   d.binsPerCoil = document.getElementById('e_binsPerCoil').value;
-  d.date        = document.getElementById('e_date').value;
+  d.oilSetting  = document.getElementById('e_oilSetting').value;
   d.notes       = document.getElementById('e_notes').value.trim();
   save(); closeModal(); renderList(); updateStats();
   showToast('Updated ✓');
@@ -896,7 +1189,7 @@ document.getElementById('editModal').addEventListener('click', e => {
 
 // Close modal with Escape key
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') { closeModal(); cancelOverwrite(); }
 });
 
 // ── Sort ─────────────────────────────────────────────────────────────────
@@ -907,32 +1200,51 @@ function setSort(mode) {
   renderList();
 }
 
-function getSorted() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  let filtered = dies.filter(d =>
-    d.id.toLowerCase().includes(q) ||
-    (d.press || '').toLowerCase().includes(q) ||
-    (d.steel || '').toLowerCase().includes(q) ||
-    (d.steelLocation || '').toLowerCase().includes(q)
-  );
+function getSorted(idQuery, steelQuery) {
+  const idQ    = (idQuery    || '').toLowerCase().trim();
+  const steelQ = (steelQuery || '').toLowerCase().trim();
+
+  let filtered = dies.filter(d => {
+    const idMatch    = idQ    ? d.id.toLowerCase().includes(idQ)               : false;
+    const steelMatch = steelQ ? (d.steel || '').toLowerCase().includes(steelQ) : false;
+    if (idQ && steelQ) return idMatch && steelMatch;
+    if (idQ)           return idMatch;
+    if (steelQ)        return steelMatch;
+    return false;
+  });
+
   return filtered.sort((a, b) =>
     sortMode === 'date'
-      ? (b.date || '').localeCompare(a.date || '')
+      ? (b.createdAt || 0) - (a.createdAt || 0)
       : a.id.localeCompare(b.id)
   );
 }
 
 // ── Render ───────────────────────────────────────────────────────────────
 function renderList() {
-  const list   = document.getElementById('dieList');
-  const sorted = getSorted();
+  const list       = document.getElementById('dieList');
+  const idQuery    = document.getElementById('f_id').value.trim();
+  const steelQuery = document.getElementById('f_steel').value.trim();
   document.getElementById('totalCount').textContent = dies.length;
+
+  // Only show cards when either search field has input
+  if (!idQuery && !steelQuery) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-icon">⌕</div>
+      <h3>Type a Die ID or Steel # above</h3>
+      <p>Matching dies will appear here as you type</p>
+    </div>`;
+    return;
+  }
+
+  const sorted = getSorted(idQuery, steelQuery);
+  const queryLabel = idQuery || steelQuery;
 
   if (!sorted.length) {
     list.innerHTML = `<div class="empty">
       <div class="empty-icon">⚙</div>
-      <h3>${dies.length ? 'No results' : 'No dies logged yet'}</h3>
-      <p>${dies.length ? 'Try a different search' : 'Fill the form above to get started'}</p>
+      <h3>No results</h3>
+      <p>No dies match "${esc(queryLabel)}"</p>
     </div>`;
     return;
   }
@@ -940,8 +1252,8 @@ function renderList() {
   list.innerHTML = sorted.map(d => {
     const realIdx = dies.indexOf(d);
     return `
-    <div class="die-card">
-      <div>
+    <div class="die-card id-match">
+      <div style="cursor:pointer" onclick="populateForm(${realIdx})" title="Click to load into form">
         <div class="die-id">${esc(d.id)}</div>
         ${d.press ? `<div class="die-press-label">PRESS <span style="color:var(--text);font-weight:500">${esc(d.press)}</span></div>` : ''}
         <div class="die-meta">
@@ -952,13 +1264,10 @@ function renderList() {
           ${d.steel       ? `<div class="meta-chip"><span class="meta-key">Steel #</span><span class="meta-val">${esc(d.steel)}</span></div>` : ''}
           ${d.steelLocation ? `<div class="meta-chip"><span class="meta-key">Steel Loc.</span><span class="meta-val">${esc(d.steelLocation)}</span></div>` : ''}
           ${d.binsPerCoil ? `<div class="meta-chip"><span class="meta-key">Bins/Coil</span><span class="meta-val">${d.binsPerCoil}</span></div>` : ''}
+          ${d.oilSetting  ? `<div class="meta-chip"><span class="meta-key">Oil Setting</span><span class="meta-val">${d.oilSetting}ms</span></div>` : ''}
         </div>
         ${d.notes ? `<div class="die-notes">${esc(d.notes)}</div>` : ''}
-        <div class="die-date">${d.date || ''}</div>
-      </div>
-      <div class="card-actions">
-        <button class="btn-icon" onclick="openEdit(${realIdx})" title="Edit">✎</button>
-        <button class="btn-icon del" onclick="deleteDie(${realIdx})" title="Delete">✕</button>
+        <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--muted);margin-top:0.4rem;letter-spacing:0.08em;">TAP TO LOAD INTO FORM</div>
       </div>
     </div>`;
   }).join('');
@@ -979,18 +1288,18 @@ function updateStats() {
 // ── Export ───────────────────────────────────────────────────────────────
 function exportCSV() {
   if (!dies.length) { showToast('Nothing to export', true); return; }
-  const headers = ['Die ID','Press Number','Shut Height (in)','Guide Roller (in)','SPM','Feed Length (in)','Steel #','Steel Location','Bins per Coil','Date','Notes'];
+  const headers = ['Die ID','Press Number','Shut Height (in)','Guide Roller Set (in)','SPM','Feed Length (in)','Steel #','Steel Loc.','Bins per Coil','Oil Setting','Notes'];
   const rows = dies.map(d =>
-    [d.id,d.press,d.shutHeight,d.guideRoller,d.spm,d.feedLength,d.steel,d.steelLocation,d.binsPerCoil,d.date,d.notes]
+    [d.id,d.press,d.shutHeight,d.guideRoller,d.spm,d.feedLength,d.steel,d.steelLocation,d.binsPerCoil,d.oilSetting,d.notes]
       .map(v => `"${(v||'').toString().replace(/"/g,'""')}"`)
   );
-  dl('dielog_export.csv','text/csv',[headers.join(','),...rows.map(r=>r.join(','))].join('\n'));
+  dl('pressnotes_export.csv','text/csv',[headers.join(','),...rows.map(r=>r.join(','))].join('\n'));
   showToast('CSV exported ✓');
 }
 
 function exportJSON() {
   if (!dies.length) { showToast('Nothing to export', true); return; }
-  dl('dielog_export.json','application/json', JSON.stringify(dies, null, 2));
+  dl('pressnotes_export.json','application/json', JSON.stringify(dies, null, 2));
   showToast('JSON exported ✓');
 }
 
@@ -1054,7 +1363,7 @@ installBtn.addEventListener('click', async () => {
     const { outcome } = await deferredInstall.userChoice;
     if (outcome === 'accepted') {
       installBanner.classList.remove('visible');
-      showToast('DieLog installed ✓');
+      showToast('Press Notes installed ✓');
     }
     deferredInstall = null;
   } else {
@@ -1132,9 +1441,9 @@ function parseCSVText(text) {
   const spmCol      = col('spm');
   const feedCol     = col('feed length');
   const steelCol    = col('steel #') !== -1 ? col('steel #') : (col('steel number') !== -1 ? col('steel number') : col('steel'));
-  const steelLocCol = col('steel location');
+  const steelLocCol = col('steel loc') !== -1 ? col('steel loc') : col('steel location');
   const binsCol     = col('bins per coil');
-  const dateCol     = col('date');
+  const oilCol      = col('oil setting');
   const notesCol    = col('notes');
 
   if (idCol === -1) return null;
@@ -1167,7 +1476,7 @@ function parseCSVText(text) {
       steel:         parseCell(cells, steelCol),
       steelLocation: parseCell(cells, steelLocCol),
       binsPerCoil:   parseCell(cells, binsCol),
-      date:          parseCell(cells, dateCol),
+      oilSetting:    parseCell(cells, oilCol),
       notes:         parseCell(cells, notesCol),
       createdAt:     Date.now() + i
     });
@@ -1329,7 +1638,7 @@ async function sendToSheets(entries) {
     steel:         d.steel         || '',
     steelLocation: d.steelLocation || '',
     binsPerCoil:   d.binsPerCoil   || '',
-    date:          d.date          || '',
+    oilSetting:    d.oilSetting    || '',
     notes:         d.notes         || ''
   }));
 
@@ -1348,16 +1657,76 @@ function setSyncStatus(msg, type) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
-document.getElementById('f_date').value = today();
 load();
 renderList();
 updateStats();
 syncOnlineState();
 
+document.getElementById('overwriteModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('overwriteModal')) cancelOverwrite();
+});
+
 // Enter to submit
 document.querySelectorAll('#addForm input').forEach(input =>
   input.addEventListener('keydown', e => { if (e.key === 'Enter') addDie(); })
 );
+
+// ── EULA Gate ─────────────────────────────────────────────────────────────
+
+// REPLACE with your deployed Google Apps Script Web App URL for EULA logging.
+// See the included EULALogger-AppScript.gs file for setup instructions.
+const EULA_LOG_URL = 'YOUR_EULA_APPS_SCRIPT_URL';
+
+(function() {
+  const EULA_KEY = 'dielog_eula_accepted_v1';
+  const gate = document.getElementById('eula-gate');
+  const body = document.getElementById('eulaBody');
+  const hint = document.getElementById('eulaScrollHint');
+
+  if (localStorage.getItem(EULA_KEY) === 'yes') {
+    gate.classList.add('hidden');
+  }
+
+  // Hide scroll hint once user has scrolled near the bottom
+  body.addEventListener('scroll', function() {
+    if (body.scrollTop + body.clientHeight >= body.scrollHeight - 30) {
+      hint.style.opacity = '0';
+    } else {
+      hint.style.opacity = '1';
+    }
+  });
+
+  window.acceptEula = function() {
+    const agreedAt = new Date().toISOString();
+
+    // Save locally
+    localStorage.setItem(EULA_KEY, 'yes');
+    localStorage.setItem('pressnotes_eula_agreed_at', agreedAt);
+
+    // Log to Google Sheet if URL is configured
+    if (EULA_LOG_URL && EULA_LOG_URL !== 'YOUR_EULA_APPS_SCRIPT_URL') {
+      const payload = {
+        agreedAt:   agreedAt,
+        userAgent:  navigator.userAgent,
+        platform:   navigator.platform || 'unknown',
+        language:   navigator.language || 'unknown',
+        screenSize: `${screen.width}x${screen.height}`,
+        appVersion: 'Press Notes v1'
+      };
+      fetch(EULA_LOG_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      }).catch(() => {
+        // Silently fail — agreement is still recorded locally
+      });
+    }
+
+    gate.classList.add('hidden');
+    showToast('Terms accepted ✓');
+  };
+})();
+
 </script>
 
 </body>
